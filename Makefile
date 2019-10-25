@@ -7,7 +7,7 @@ SRC_DIR = src
 
 OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/SVRP.o $(OBJ_DIR)/graph.o
 
-BINARY_NAME = svrp-second-stage
+BINARY_NAME = svrp
 LINKING_FLAGS = -O3 -std=c++11
 COMPILATION_FLAGS = -c -O3 -std=c++11 -Iinclude
 
