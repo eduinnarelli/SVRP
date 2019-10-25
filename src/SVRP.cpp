@@ -144,7 +144,6 @@ double probExceedsCapacity(int i, Graph g, vector<vector<double>> f, int capacit
 
 	}
 
-	//cout << "probExceedsCapacity in client " << vtx << ": "<< probExceedsCap << endl;
 	return probExceedsCap;
 
 }
@@ -176,7 +175,7 @@ double expectedLength(Graph g, vector<vector<double>> f, int capacity, vector<in
 
 	/* Como um vértice pode não estar presente, computa-se o custo da possibilidade de cada
 	vértice ser o primeiro,	o que é igual a ele estar presente e os anteriores não, vezes a
-	sua distância	ao depósito */
+	sua distância ao depósito */
 	for(int i = 0; i < sizeRoute; i++) {
 
 		for(int r = 0; r <= i-1; r++) {
@@ -188,7 +187,7 @@ double expectedLength(Graph g, vector<vector<double>> f, int capacity, vector<in
 	}
 
 	/* Como um vértice pode não estar presente, computa-se o custo de cada vértice ser o último,
-	o que é igual a ele estar presente e os posteriores não estarem presentes vezes a distância
+	o que é igual a ele estar presente e os posteriores não estarem presentes, vezes a distância
 	ao depósito */
 	for(int i = 0; i < sizeRoute; i++) {
 
@@ -216,8 +215,8 @@ double expectedLength(Graph g, vector<vector<double>> f, int capacity, vector<in
 		}
 	}
 
-	/* Computar o custo "recurso" esperado, ou seja, a capacidade limite ser atingida e portanto o
-	veículo deve retornar ao depósito. */
+	/* Computar o custo esperado da capacidade limite ser atingida e o veículo retornar
+	ao depósito. */
 	for(int i = 0; i < sizeRoute; i++) {
 
 		// Somar a probabilidade de exceder vezes o custo de retornar ao depósito
