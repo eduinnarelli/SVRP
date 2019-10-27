@@ -31,8 +31,6 @@ int main() {
 	/* Dado este caminho, computa todas as probabilidades de demanda total até cada vértice */
     vector<vector<double> > f = probDemandsInRoute(graph, route);
 
-    //cout << setprecision(3);
-
 	if(verbosity == 'y') {
 		for (int i = 0; i < graph.numberVertices; i++) {
 	        for (int j = 0; j <= 20*(graph.numberVertices-1); j++) {

@@ -1,6 +1,8 @@
 #include<cmath>
 #include "SVRP.h"
 
+// openMP
+
 /*
 probDemandsInRoute: Calcula todas as probabilidades de demanda total até cada vértice
 salvando estes valores em uma matriz. Nesta matriz, as linhas representam o último vértice
@@ -39,7 +41,7 @@ vector<vector<double>> probDemandsInRoute(Graph g, vector<int> orderInRoute) {
 				// Se não, consideramos as probabilidades de todas as demandas possíveis dos vértices anteriores
 				if (m == 1 && r <= 20) {
 
-				f[1][r] = g.vertices[next].probDemand[r];
+					f[1][r] = g.vertices[next].probDemand[r];
 
 				} else if (r <= 20*m) {
 

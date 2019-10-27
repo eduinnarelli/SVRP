@@ -20,7 +20,7 @@ public:
 
     int numberVertices;
     vector<vertex> vertices;
-    vector<vector<double> > adjMatrix;
+    vector<vector<double>> adjMatrix;
     
     void createInstance(int n);
     void computeDistances();

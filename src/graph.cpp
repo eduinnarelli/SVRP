@@ -4,6 +4,7 @@
 #include<cmath>
 #include<random>
 #include<string>
+#include<time.h>
 #include "graph.h"
 using namespace std;
 
@@ -21,10 +22,9 @@ n: número de vértices do grafo.
 void Graph::createInstance(int n) {
 
     vertex newVertex;
+    std::mt19937 generator(time(0)); 
 
-    // Coordenadas possíveis dos vértices e probabilidade de presença
-    std::random_device rd;  // Será utilizado para obter uma semente para o gerador 
-    std::mt19937 generator(rd()); // Gerador de números pseudo-aleatórios Mersene Twister
+    // Possíveis coordenadas dos vértices e probabilidade de presença
     uniform_real_distribution<double> coordinate(0, 100), presence(0,1);
 
     // Possíveis intervalos das demandas dos vértices
