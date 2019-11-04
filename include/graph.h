@@ -3,10 +3,9 @@
 using namespace std;
 
 struct vertex {
-    int demRange;
-    double probOfPresence = 1;
     double x, y;
     double probDemand[21];
+    double probOfPresence = 1;
 };
 
 struct edge {

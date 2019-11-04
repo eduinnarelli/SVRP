@@ -1,48 +1,65 @@
 #include<iomanip>
-#include "SVRP.h"
+#include "SVRP_2nd_stage.h"
 
 int main() {
 
-    int numberVertices;
     Graph graph;
-    int capacity;
     char verbosity;
+	double fillingCoeff;
+	int capacity, numberVertices, numberVehicles;
 
-	/* Número de vértices do problema, incluindo o depósito */
 	cout << "Enter with number of vertices including depot: ";
     cin >> numberVertices;
 
-	/* Imprimir todas as informações do grafo ou apenas a resposta */
+	cout << "Enter with number of vehicles: ";
+    cin >> numberVehicles;
+
+	cout << "Enter with filling coefficient between 0 and 1: ";
+    cin >> fillingCoeff;
+
 	cout << "Visualize all problem information? (y/n): ";
 	cin >> verbosity;
 
-	// Temporario: capacidade igual a esperança da demanda vezes metade do número de vértices
-	capacity = max(20, 10*((numberVertices-1)/2));
-	cout << "Capacity: " << capacity << endl;
+	/* Capacidade regulada de acordo com os dados do problema */
+	capacity = 10*(numberVertices-1)/(2*numberVehicles*fillingCoeff);
+	cout << "\nCapacity of each vehicle: " << capacity << endl;
 
-	/* Cria um grafo completo respeitando a desigualdade triangular */
+	/* Criar um grafo completo respeitando a desigualdade triangular */
     graph.createInstance(numberVertices);
     if(verbosity == 'y')
     	graph.printInstance();
 
-    /* Encontra um primeiro caminho utilizando TSP força bruta */
-    vector<int> route = graph.TSP();
+    /* Definir rotas do primeiro estágio aleatoriamente */
+	double totalExpectedLength = 0;
+	vector<vector<int>> routes = randomRoutes(numberVertices, numberVehicles);
 
-	/* Dado este caminho, computa todas as probabilidades de demanda total até cada vértice */
-    vector<vector<double> > f = probDemandsInRoute(graph, route);
+	/* Calcular e acumular custo esperado das rotas */
+	for (int r = 0; r < numberVehicles; r++) {
 
-	if(verbosity == 'y') {
-		for (int i = 0; i < graph.numberVertices; i++) {
-	        for (int j = 0; j <= 20*(graph.numberVertices-1); j++) {
-	        	cout << "("<< i << "," << j << "): ";
-	            cout << f[i][j] << " ";
-	        }
-	        cout << "\n\n";
-	    }
+		vector<vector<double>> f = probTotalDemand(graph, routes[r]);
+		double routeExpectedLength = expectedLength(graph, f, capacity, routes[r]);
+
+		if(verbosity == 'y') {
+			cout << "------------------------------------------------------------\n\n";
+			cout << "f(i,j): prob. of total demand being equal to j on the ith client of the route\n\n";
+			for (int i = 1; i <= routes[r].size(); i++) {
+	        	for (int j = 0; j <= 20*routes[r].size(); j++) {
+	        		cout << "f("<< i << "," << j << "): ";
+	            	cout << f[i][j] << " ";
+	        	}
+	        	cout << "\n\n";
+	    	}
+			cout << "------------------------------------------------------------\n\n";
+		}
+
+		cout << "Expected length of route " << r + 1 << ": ";
+		cout << routeExpectedLength << "\n\n";
+
+		totalExpectedLength += routeExpectedLength;
+
 	}
 
-	cout << "Expected cost of TSP route: ";
-	cout << expectedLength(graph, f, capacity, route) << endl;
+	cout << "Total expected length: " << totalExpectedLength << endl;
 
     return 0;
 

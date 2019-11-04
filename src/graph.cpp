@@ -21,6 +21,7 @@ n: número de vértices do grafo.
 */
 void Graph::createInstance(int n) {
 
+    int range;
     vertex newVertex;
     std::mt19937 generator(time(0)); 
 
@@ -52,9 +53,9 @@ void Graph::createInstance(int n) {
             // Gerar probabilidade de presença e demanda dos clientes
 
             newVertex.probOfPresence = presence(generator);
-            newVertex.demRange = demRange(generator);
+            range = demRange(generator);
 
-            switch(newVertex.demRange) {
+            switch(range) {
 
                 // Intervalo [1,9]
                 case 1:
@@ -148,7 +149,7 @@ printInstance: Imprime os seguintes dados do problema:
 */
 void Graph::printInstance() {
 
-    cout << "Depot in: " << this->vertices[0].x << ' ' << this->vertices[0].y << "\n\n";
+    cout << "\nDepot in: " << this->vertices[0].x << ' ' << this->vertices[0].y << "\n\n";
 
     for (int i = 1; i < this->numberVertices; i++) {
 
@@ -171,8 +172,6 @@ void Graph::printInstance() {
             cout << this->adjMatrix[i][j] << endl;
         }
     }
-
-    cout << endl;
 
 }
 

@@ -5,7 +5,7 @@
 OBJ_DIR = obj
 SRC_DIR = src
 
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/SVRP.o $(OBJ_DIR)/graph.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/SVRP_1st_stage.o $(OBJ_DIR)/SVRP_2nd_stage.o $(OBJ_DIR)/graph.o
 
 BINARY_NAME = svrp
 LINKING_FLAGS = -O3 -std=c++11
