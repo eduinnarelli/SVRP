@@ -1,7 +1,8 @@
 #include <algorithm>
 #include <bitset>
 #include <cmath>
-#include "SVRP_2nd_stage.h"
+#include <time.h>
+#include "SVRP.h"
 
 /*
 probTotalDemand: Calcula todas as probabilidades de demanda total até cada vértice em uma
@@ -149,7 +150,7 @@ double returnCost(int i, int j, Graph g, vector<int> orderInRoute) {
 }
 
 /*
-expectedLength: Calcula o custo esperado de uma rota.
+routeExpectedLength: Calcula o custo esperado de uma rota.
 
 Entrada:
 g: grafo do problema sendo considerado;
@@ -160,7 +161,7 @@ orderInRoute: ordem dos vértices na rota. orderInRoute[2] = 3o cliente da rota.
 
 Saída: double indicando o custo esperado de se percorrer uma rota dada.
 */
-double expectedLength(Graph g, vector<vector<double>> f, int capacity, vector<int> orderInRoute) {
+double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vector<int> orderInRoute) {
 
 	double expectedLength = 0, accPresence = 1, probReachCap;
 	int sizeRoute = orderInRoute.size();
@@ -231,4 +232,97 @@ double expectedLength(Graph g, vector<vector<double>> f, int capacity, vector<in
 	}
 
 	return expectedLength;
+
+}
+
+/*
+totalExpectedLength: Calcula e acumula o custo esperado de todas as rotas.
+
+Saída: double indicando o custo esperado de se percorrer todas as rotas.
+*/
+
+double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes, char verbosity) {
+
+	double totalExpLength = 0;
+
+	for (int r = 0; r < routes.size(); r++) {
+
+		vector<vector<double>> f = probTotalDemand(g, routes[r]);
+		double routeExpLength = routeExpectedLength(g, f, capacity, routes[r]);
+
+		if(verbosity == 'y') {
+			cout << "------------------------------------------------------------\n\n";
+			cout << "f(i,j): prob. of total demand being equal to j on the ith client of the route\n\n";
+			for (int i = 1; i <= routes[r].size(); i++) {
+	        	for (int j = 0; j <= 20*routes[r].size(); j++) {
+	        		cout << "f("<< i << "," << j << "): ";
+	            	cout << f[i][j] << " ";
+	        	}
+	        	cout << "\n\n";
+	    	}
+			cout << "------------------------------------------------------------\n\n";
+		}
+
+		cout << "Expected length of route " << r + 1 << ": ";
+		cout << routeExpLength << "\n\n";
+
+		totalExpLength += routeExpLength;
+
+	}
+
+	return totalExpLength;
+
+}
+
+/*
+randomRoutes: Algoritmo que gera m rotas aleatórias para testar as funções de
+segundo estágio, tal que m é o número de veículos.
+
+Saída:
+routes: vetor de rotas, cada uma um vetor de inteiros indicando a ordem em que
+os vértices devem ser percorridos. 
+*/
+vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
+
+    vector<int> costumers;
+    
+    for (int i = 1; i < numberVertices; i++) 
+        costumers.push_back(i);
+
+    srand(time(0));
+    random_shuffle(costumers.begin(), costumers.end(), [](int i){ return rand()%i; });
+
+    vector<vector<int>> routes(numberVehicles);
+    int routeSize = numberVertices / numberVehicles;
+
+    cout << endl;
+
+    for (int r = 0; r < numberVehicles; r++) {
+
+        auto start_it = next(costumers.begin(), r*routeSize);
+        auto end_it = next(costumers.begin(), r*routeSize + routeSize);
+
+        routes[r].resize(routeSize);
+
+        // Colocar o que restou na última rota
+        if (r == numberVehicles - 1) {
+            end_it = costumers.end();
+            routes[r].resize(costumers.size() - r*routeSize);
+        }
+
+        copy(start_it, end_it, routes[r].begin());
+
+        cout << "Route " << r + 1 << ": ";
+
+        for (int i = 0; i < routes[r].size(); i++)
+            cout << routes[r][i] << ' ';
+
+        cout << endl;
+
+    }
+
+    cout << endl;
+
+    return routes;
+
 }
