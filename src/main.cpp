@@ -1,10 +1,11 @@
 #include<iomanip>
-#include "SVRP.h"
+#include "TabuSearchSVRP.h"
+
+char verbosity;
 
 int main() {
 
     Graph graph;
-    char verbosity;
 	double fillingCoeff;
 	int capacity, numberVertices, numberVehicles;
 
@@ -29,11 +30,13 @@ int main() {
     if(verbosity == 'y')
     	graph.printInstance();
 
+	TabuSearchSVRP ts(graph, numberVehicles, capacity);
+
     /* Definir rotas do primeiro estágio aleatoriamente */
 	vector<vector<int>> routes = randomRoutes(numberVertices, numberVehicles);
 
 	cout << "Total expected length: ";
-	cout << totalExpectedLength(graph, capacity, routes, verbosity) << endl;
+	cout << totalExpectedLength(graph, capacity, routes) << endl;
 
     return 0;
 

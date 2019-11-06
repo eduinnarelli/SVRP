@@ -241,7 +241,7 @@ totalExpectedLength: Calcula e acumula o custo esperado de todas as rotas.
 Saída: double indicando o custo esperado de se percorrer todas as rotas.
 */
 
-double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes, char verbosity) {
+double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes) {
 
 	double totalExpLength = 0;
 

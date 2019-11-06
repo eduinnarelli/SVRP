@@ -35,6 +35,8 @@ void Graph::createInstance(int n) {
     uniform_int_distribution<int> demand1(1,9), demand2(5,15), demand3(10,20);
 
     this->numberVertices = n;
+    this->totalExpectedDemand = 0;
+    this->expectedDemand.resize(n);
 
     // Inicializar matriz de adjacências
     vector<double> v(n, 0);
@@ -68,6 +70,8 @@ void Graph::createInstance(int n) {
                             newVertex.probDemand[j] = 0;
                         }
 
+                        this->expectedDemand[i] += newVertex.probDemand[j]*j;
+
                     }
 
                     break;
@@ -82,6 +86,8 @@ void Graph::createInstance(int n) {
                         } else {
                             newVertex.probDemand[j] = 0;
                         }
+
+                        this->expectedDemand[i] += newVertex.probDemand[j]*j;
 
                     }
 
@@ -98,12 +104,17 @@ void Graph::createInstance(int n) {
                             newVertex.probDemand[j] = 0;
                         }
 
+                        this->expectedDemand[i] += newVertex.probDemand[j]*j;
+
                     }
 
                 default:
                     break;
 
             }
+
+            this->expectedDemand[i] *= newVertex.probOfPresence;
+            this->totalExpectedDemand += this->expectedDemand[i];
 
         }
 

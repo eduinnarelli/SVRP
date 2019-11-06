@@ -2,6 +2,8 @@
 #include<vector>
 using namespace std;
 
+extern char verbosity;
+
 struct vertex {
     double x, y;
     double probDemand[21];
@@ -18,6 +20,8 @@ class Graph {
 public:
 
     int numberVertices;
+    double totalExpectedDemand;
+    vector<double> expectedDemand;
     vector<vertex> vertices;
     vector<vector<double>> adjMatrix;
     
