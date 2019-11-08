@@ -241,7 +241,7 @@ totalExpectedLength: Calcula e acumula o custo esperado de todas as rotas.
 Saída: double indicando o custo esperado de se percorrer todas as rotas.
 */
 
-double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes, char verbosity) {
+double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes) {
 
 	double totalExpLength = 0;
 
@@ -325,4 +325,143 @@ vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
 
     return routes;
 
+}
+
+double costCen(vector<vector<int>> A, vector<int> B, Graph g, vector<int> route, int capacity) {
+
+	double costRoute = 0;
+	int currCap = 0, proxClient = route[0];
+
+	costRoute += g.adjMatrix[0][route[0]];
+	currCap += A[0][B[0]];
+
+	if(currCap >= capacity && route.size() > 1) {
+		costRoute += g.adjMatrix[route[0]][0];
+		costRoute += g.adjMatrix[0][route[0]];
+		currCap = 0;
+	}
+
+	for(int i = 1; i < route.size(); i++) {
+
+		proxClient = route[i];
+		costRoute += g.adjMatrix[route[i-1]][proxClient];
+
+		if(currCap + A[i][B[i]] >= capacity) {
+			costRoute += g.adjMatrix[proxClient][0];
+			costRoute += g.adjMatrix[0][proxClient];
+			currCap = 0;
+		}
+
+		currCap += A[i][B[i]];
+
+	}
+
+	costRoute += g.adjMatrix[proxClient][0];
+	return costRoute;
+
+}
+
+double bruteForce(Graph g, int capacity, vector<vector<int>> routes) {
+
+	double expectedRoutesCost = 0, acc, acc1;
+	vector<int> presence, cenRoute;
+	int iter = 0;
+
+	for(int i = 0; i < routes.size(); i++) {
+
+		presence.resize(routes[i].size());
+		presence[0] = 1;
+		for(int j = 1; j < routes[i].size(); j++) {
+			presence[j] = 0;
+		}
+
+		acc1 = 0;
+		for(int k = 0; k < pow(2,routes[i].size())-1; k++) {
+
+			for(int l = 0; l < routes[i].size(); l++) {
+				if(presence[l] == 1)
+					cenRoute.push_back(routes[i][l]);
+			}
+
+			acc = bruteForceCost(g, capacity, cenRoute);
+			for(int j = 0; j < routes[i].size(); j++) {
+				if(presence[j] == 0) {
+					acc *= (1 - g.vertices[routes[i][j]].probOfPresence);
+				}
+				else {
+					acc *= g.vertices[routes[i][j]].probOfPresence;
+				}
+			}
+			cenRoute.clear();
+			iter = 0;
+			while(iter < routes[i].size()) {
+				if(presence[iter] == 0) {
+					presence[iter] = 1;
+					break;
+				}
+				presence[iter] = 0;
+				iter++;
+			}
+			acc1 += acc;
+		}
+		expectedRoutesCost += acc1;
+	}
+
+	return expectedRoutesCost;
+
+}
+
+double bruteForceCost(Graph g, int capacity, vector<int> route) {
+
+	if(route.empty()) {return 0;}
+
+	double expectedRouteCost = 0, expectedCenCost = 0;
+	int numClients = route.size(), numDiffDemand = 11, i, j, k;
+
+	vector<int> col(numDiffDemand+1, -1);
+	vector<vector<int>> A(numClients, col);
+
+	for(i = 0; i < numClients; i++) {
+
+		k = 0;
+		while(g.vertices[route[i]].probDemand[k] == 0) k++;
+
+		for(j = 0; j < numDiffDemand; j++) {
+
+			if(g.vertices[route[i]].probDemand[k] != 0)
+				A[i][j] = k;
+			else
+				break;
+
+			k++;
+		}
+	}
+
+	vector<int> B(numClients, 0);
+
+	for(i = 0; i < pow(numDiffDemand,numClients); i++) {
+
+		double acc = costCen(A, B, g, route, capacity);
+		for(int k = 0; k < numClients; k++)
+			acc *= g.vertices[route[k]].probDemand[A[k][B[k]]];
+		expectedRouteCost += acc;
+
+		for(j = 0; j < numClients; j++) {
+
+			if(A[j][B[j]+1] != -1) {
+
+				for(k = j-1; k > -1; k--)
+					B[k] = 0;
+
+				B[j]++;
+				break;
+			}
+		}
+
+		if(j == numClients)
+			break;
+
+	}
+
+	return expectedRouteCost;
 }
