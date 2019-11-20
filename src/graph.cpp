@@ -23,7 +23,7 @@ void Graph::createInstance(int n) {
 
     int range;
     vertex newVertex;
-    std::mt19937 generator(time(0)); 
+    std::mt19937 generator(time(0));
 
     // Possíveis coordenadas dos vértices e probabilidade de presença
     uniform_real_distribution<double> coordinate(0, 100), presence(0,1);
@@ -37,6 +37,7 @@ void Graph::createInstance(int n) {
     this->numberVertices = n;
     this->totalExpectedDemand = 0;
     this->expectedDemand.resize(n);
+    fill(this->expectedDemand.begin(),this->expectedDemand.end(),0);
 
     // Inicializar matriz de adjacências
     vector<double> v(n, 0);

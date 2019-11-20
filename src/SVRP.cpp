@@ -6,7 +6,7 @@
 
 /*
 probTotalDemand: Calcula todas as probabilidades de demanda total até cada vértice em uma
-rota salvando estes valores em uma matriz. Nesta matriz, as linhas representam o último 
+rota salvando estes valores em uma matriz. Nesta matriz, as linhas representam o último
 vértice sendo considerado e as colunas a possível demanda até este vértice. Assim, se estamos
 na 3a linha e 4a coluna, computamos a probabilidade de que a demanda dos vértices 1, 2 e 3
 sejam iguais a 4. A ordem dos vértices segue a ordem da rota.
@@ -27,38 +27,36 @@ vector<vector<double>> probTotalDemand(Graph g, vector<int> route) {
 	int next, orderInRoute = 1, routeSize = route.size();
 	vector<double> v(20*routeSize + 1, 0);
 	vector<vector<double>> f(route.size() + 1, v);
+	double probDemandK;
 
-	f[0][0] = 1; // termo neutro do produtório
+	f[0][0] = 1; // probabilidade da carga do veiculo até o depósito ser 0
 
 	while (orderInRoute <= routeSize) {
 
-		// Considera o próximo vértice da rota
+		// Considera o próximo cliente da rota
 		next = route[orderInRoute - 1];
 
-		// Para todas as demandas possíveis
-		for (int dem = 1; dem <= 20 * routeSize; dem++) {
+		// Probabilidade de não haver nenhuma carga até o cliente, ou seja, todos ausentes
+		f[orderInRoute][0] = (1 - g.vertices[next].probOfPresence)*f[orderInRoute-1][0];
 
-			// Se for o primeiro vértice da rota, a probabilidade depende apenas da sua própria demanda
-			if (orderInRoute == 1 && dem <= 20) {
+		// Para todas as demandas até o cliente possíveis
+		for (int dem = 1; dem <= 20 * orderInRoute; dem++) {
 
-				f[1][dem] = g.vertices[next].probDemand[dem];
+			// Probabilidade do cliente estar ausente, mantendo a mesma demanda anterior
+			f[orderInRoute][dem] += (1-g.vertices[next].probOfPresence) * f[orderInRoute - 1][dem];
 
-			// Se não, consideramos as probabilidades de todas as demandas possíveis dos vértices anteriores
-			} else if (dem <= 20 * orderInRoute) {
+			// Para todas as demandas possíveis do cliente
+			for (int k = 1; k <= min(20, dem); k++) {
 
-				for (int k = 1; k <= min(20, dem); k++) {
+				// Probabilidade do cliente estar presente com uma demanda k
+				probDemandK = g.vertices[next].probOfPresence * g.vertices[next].probDemand[k];
 
-					double probDemandK = g.vertices[next].probDemand[k];
-
-					if (probDemandK != 0) {
-						f[orderInRoute][dem] += probDemandK * f[orderInRoute - 1][dem - k];
-					}
+				if (probDemandK > 0) {
+					f[orderInRoute][dem] += probDemandK * f[orderInRoute - 1][dem - k];
 				}
 			}
 		}
-
 		orderInRoute++;
-		
 	}
 
 	return f;
@@ -91,7 +89,7 @@ double probReachCapacity(int i, Graph g, vector<vector<double>> f, int capacity,
 
 		// Para todas as possíveis "k" capacidades residuais no vértice anterior a "i"
 		for (int k = 1; k <= 20; k++) {
-			probReachCap += g.vertices[vtx].probDemand[k] * f[i][q * capacity - k];
+			probReachCap += g.vertices[vtx].probOfPresence * g.vertices[vtx].probDemand[k] * f[i][q * capacity - k];
 		}
 	}
 
@@ -128,7 +126,7 @@ double probExceedsCapacity(int i, Graph g, vector<vector<double>> f, int capacit
 
 			// Para todas as possíveis demandas "r" do vértice "i" maiores do que "k"
 			for (int r = k + 1; r <= 20; r++) {
-				probDemandExceeds += g.vertices[vtx].probDemand[r];
+				probDemandExceeds += g.vertices[vtx].probOfPresence * g.vertices[vtx].probDemand[r];
 			}
 
 			/* Somar probabilidade de que a demanda em "i" é maior do que "k"
@@ -163,7 +161,7 @@ Saída: double indicando o custo esperado de se percorrer uma rota dada.
 */
 double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vector<int> orderInRoute) {
 
-	double expectedLength = 0, accPresence = 1, probReachCap;
+	double expectedLength = 0;
 	int sizeRoute = orderInRoute.size();
 
 	/* Como um vértice pode não estar presente, computa-se o custo da possibilidade de cada
@@ -171,12 +169,12 @@ double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vect
 	sua distância ao depósito */
 	for (int i = 0; i < sizeRoute; i++) {
 
+		double expectedLength1 = g.adjMatrix[0][orderInRoute[i]] * g.vertices[orderInRoute[i]].probOfPresence;
 		for (int r = 0; r <= i - 1; r++) {
-			accPresence *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
+			expectedLength1 *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
 		}
 
-		expectedLength += g.adjMatrix[0][orderInRoute[i]] * g.vertices[orderInRoute[i]].probOfPresence * accPresence;
-		accPresence = 1;
+		expectedLength += expectedLength1;
 	}
 
 	/* Como um vértice pode não estar presente, computa-se o custo de cada vértice ser o último,
@@ -184,12 +182,12 @@ double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vect
 	ao depósito */
 	for (int i = 0; i < sizeRoute; i++) {
 
+		double expectedLength2 = g.adjMatrix[orderInRoute[i]][0] * g.vertices[orderInRoute[i]].probOfPresence;
 		for (int r = i + 1; r < sizeRoute; r++) {
-			accPresence *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
+			expectedLength2 *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
 		}
 
-		expectedLength += g.adjMatrix[orderInRoute[i]][0] * g.vertices[orderInRoute[i]].probOfPresence * accPresence;
-		accPresence = 1;
+		expectedLength += expectedLength2;
 	}
 
 	/* Como um vértice pode não estar presente, computa-se o custo de cada possível próximo vértice
@@ -199,13 +197,13 @@ double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vect
 
 		for (int j = i + 1; j < sizeRoute; j++) {
 
+			double probBothPresent = g.vertices[orderInRoute[i]].probOfPresence * g.vertices[orderInRoute[j]].probOfPresence;
+			double expectedLength3 = g.adjMatrix[orderInRoute[i]][orderInRoute[j]] * probBothPresent;
 			for (int r = i + 1; r <= j - 1; r++) {
-				accPresence *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
+				expectedLength3 *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
 			}
 
-			double probBothPresent = g.vertices[orderInRoute[i]].probOfPresence * g.vertices[orderInRoute[j]].probOfPresence;
-			expectedLength += g.adjMatrix[orderInRoute[i]][orderInRoute[j]] * probBothPresent * accPresence;
-			accPresence = 1;
+			expectedLength += expectedLength3;
 		}
 	}
 
@@ -214,20 +212,29 @@ double routeExpectedLength(Graph g, vector<vector<double>> f, int capacity, vect
 	for (int i = 0; i < sizeRoute; i++) {
 
 		// Somar a probabilidade de exceder vezes o custo de retornar ao depósito
-		expectedLength += probExceedsCapacity(i, g, f, capacity, orderInRoute) * returnCost(i, i, g, orderInRoute);
+		double expectedLength4;
+		if(i == 0) {
+			expectedLength4 = 0;
+		}
+		else {
+			expectedLength4 = probExceedsCapacity(i, g, f, capacity, orderInRoute) * returnCost(i, i, g, orderInRoute);
+		}
 
-		// Salvar probabilidade de atingir exatamente a capacidade no cliente i
-		probReachCap = probReachCapacity(i, g, f, capacity, orderInRoute);
+		expectedLength += expectedLength4;
 
 		// Somar a probabilidade de atingir exatamente a capacidade vezes o custo de retornar ao depósito
 		for (int j = i + 1; j < sizeRoute; j++) {
 
+			// Salvar probabilidade de atingir exatamente a capacidade no cliente i
+			double probReachCap = probReachCapacity(i, g, f, capacity, orderInRoute);
+
+			expectedLength4 = returnCost(i, j, g, orderInRoute) * g.vertices[orderInRoute[j]].probOfPresence;
+			expectedLength4 *= probReachCap;
 			for (int r = i + 1; r <= j - 1; r++) {
-				accPresence *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
+				expectedLength4 *= (1 - g.vertices[orderInRoute[r]].probOfPresence);
 			}
 
-			expectedLength += probReachCap * g.vertices[orderInRoute[j]].probOfPresence * returnCost(i, j, g, orderInRoute) * accPresence;
-			accPresence = 1;
+			expectedLength += expectedLength4;
 		}
 	}
 
@@ -247,10 +254,12 @@ double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes) {
 
 	for (int r = 0; r < routes.size(); r++) {
 
+		if(routes[r].size() == 0)
+			continue;
 		vector<vector<double>> f = probTotalDemand(g, routes[r]);
 		double routeExpLength = routeExpectedLength(g, f, capacity, routes[r]);
 
-		if(verbosity == 'y') {
+		if(false) {//verbosity == 'y') {
 			cout << "------------------------------------------------------------\n\n";
 			cout << "f(i,j): prob. of total demand being equal to j on the ith client of the route\n\n";
 			for (int i = 1; i <= routes[r].size(); i++) {
@@ -263,8 +272,8 @@ double totalExpectedLength(Graph g, int capacity, vector<vector<int>> routes) {
 			cout << "------------------------------------------------------------\n\n";
 		}
 
-		cout << "Expected length of route " << r + 1 << ": ";
-		cout << routeExpLength << "\n\n";
+		//cout << "Expected length of route " << r + 1 << ": ";
+		//cout << routeExpLength << endl;
 
 		totalExpLength += routeExpLength;
 
@@ -280,13 +289,13 @@ segundo estágio, tal que m é o número de veículos.
 
 Saída:
 routes: vetor de rotas, cada uma um vetor de inteiros indicando a ordem em que
-os vértices devem ser percorridos. 
+os vértices devem ser percorridos.
 */
 vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
 
     vector<int> costumers;
-    
-    for (int i = 1; i < numberVertices; i++) 
+
+    for (int i = 1; i < numberVertices; i++)
         costumers.push_back(i);
 
     srand(time(0));
@@ -329,36 +338,54 @@ vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
 
 double costCen(vector<vector<int>> A, vector<int> B, Graph g, vector<int> route, int capacity) {
 
+  int iter = 0, currCap = 0, currClient = 0, proxClient = route[0];
 	double costRoute = 0;
-	int currCap = 0, proxClient = route[0];
 
-	costRoute += g.adjMatrix[0][route[0]];
-	currCap += A[0][B[0]];
+	while(iter != route.size()-1) {
 
-	if(currCap >= capacity && route.size() > 1) {
-		costRoute += g.adjMatrix[route[0]][0];
-		costRoute += g.adjMatrix[0][route[0]];
-		currCap = 0;
-	}
+		costRoute += g.adjMatrix[currClient][proxClient];
 
-	for(int i = 1; i < route.size(); i++) {
+		if(currCap + A[iter][B[iter]] == capacity) {
 
-		proxClient = route[i];
-		costRoute += g.adjMatrix[route[i-1]][proxClient];
-
-		if(currCap + A[i][B[i]] >= capacity) {
 			costRoute += g.adjMatrix[proxClient][0];
-			costRoute += g.adjMatrix[0][proxClient];
 			currCap = 0;
+			currClient = 0;
+			iter++;
+			proxClient = route[iter];
 		}
 
-		currCap += A[i][B[i]];
+		else if(currCap + A[iter][B[iter]] > capacity) {
+
+			costRoute += g.adjMatrix[proxClient][0];
+			currCap = currCap - capacity;
+			currClient = 0;
+		}
+
+		else {
+
+			currCap += A[iter][B[iter]];
+			iter++;
+			currClient = proxClient;
+			proxClient = route[iter];
+		}
 
 	}
 
-	costRoute += g.adjMatrix[proxClient][0];
-	return costRoute;
+	costRoute += g.adjMatrix[currClient][proxClient];
 
+	if(currCap + A[iter][B[iter]] > capacity) {
+
+		costRoute += g.adjMatrix[proxClient][0];
+		costRoute += g.adjMatrix[0][proxClient];
+		costRoute += g.adjMatrix[proxClient][0];
+	}
+
+	else {
+
+		costRoute += g.adjMatrix[proxClient][0];
+	}
+
+	return costRoute;
 }
 
 double bruteForce(Graph g, int capacity, vector<vector<int>> routes) {
@@ -392,6 +419,7 @@ double bruteForce(Graph g, int capacity, vector<vector<int>> routes) {
 					acc *= g.vertices[routes[i][j]].probOfPresence;
 				}
 			}
+
 			cenRoute.clear();
 			iter = 0;
 			while(iter < routes[i].size()) {
@@ -413,7 +441,8 @@ double bruteForce(Graph g, int capacity, vector<vector<int>> routes) {
 
 double bruteForceCost(Graph g, int capacity, vector<int> route) {
 
-	if(route.empty()) {return 0;}
+	if(route.empty())
+		return 0;
 
 	double expectedRouteCost = 0, expectedCenCost = 0;
 	int numClients = route.size(), numDiffDemand = 11, i, j, k;
@@ -442,8 +471,9 @@ double bruteForceCost(Graph g, int capacity, vector<int> route) {
 	for(i = 0; i < pow(numDiffDemand,numClients); i++) {
 
 		double acc = costCen(A, B, g, route, capacity);
-		for(int k = 0; k < numClients; k++)
+		for(int k = 0; k < numClients; k++) {
 			acc *= g.vertices[route[k]].probDemand[A[k][B[k]]];
+		}
 		expectedRouteCost += acc;
 
 		for(j = 0; j < numClients; j++) {
