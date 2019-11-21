@@ -1,7 +1,7 @@
 #include<iostream>
 #include<algorithm>
-#include<vector>
 #include<cmath>
+#include<vector>
 #include<random>
 #include<string>
 #include<time.h>

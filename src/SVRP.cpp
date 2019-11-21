@@ -471,9 +471,11 @@ double bruteForceCost(Graph g, int capacity, vector<int> route) {
 	for(i = 0; i < pow(numDiffDemand,numClients); i++) {
 
 		double acc = costCen(A, B, g, route, capacity);
+
 		for(int k = 0; k < numClients; k++) {
 			acc *= g.vertices[route[k]].probDemand[A[k][B[k]]];
 		}
+
 		expectedRouteCost += acc;
 
 		for(j = 0; j < numClients; j++) {
