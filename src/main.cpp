@@ -1,6 +1,7 @@
-#include<iomanip>
+#include <iomanip>
 #include "TabuSearchSVRP.h"
 #include <algorithm>
+#include <ctime>
 
 char verbosity;
 
@@ -10,30 +11,47 @@ int main() {
   double fillingCoeff;
 	int capacity, numberVertices, numberVehicles;
 
-	cout << "Enter with number of vertices including depot: ";
-  cin >> numberVertices;
+  do {
+    cout << "Enter with number of vertices including depot (>1): ";
+    cin >> numberVertices;
+  } while(numberVertices <= 1);
 
-	cout << "Enter with number of vehicles: ";
-  cin >> numberVehicles;
+	do{
+    cout << "Enter with number of vehicles (>=1 and less then number of vertices): ";
+    cin >> numberVehicles;
+  } while(numberVehicles < 1 || numberVehicles > numberVertices-1);
 
-	cout << "Enter with filling coefficient between 0 and 1: ";
-  cin >> fillingCoeff;
+  do {
+    cout << "Enter with filling coefficient in interval (0,1]: ";
+    cin >> fillingCoeff;
+  } while(fillingCoeff <= 0 || fillingCoeff > 1);
 
-	cout << "Visualize all problem information? (y/n): ";
-  cin >> verbosity;
+  do {
+    cout << "Visualize all problem information? (y/n): ";
+    cin >> verbosity;
+  } while(verbosity != 'y' && verbosity != 'n');
 
 	/* Capacidade regulada de acordo com os dados do problema */
 	capacity = max(int(10*(numberVertices-1)/(2*numberVehicles*fillingCoeff)),20);
-	cout << "\nCapacity of each vehicle: " << capacity << endl;
+
+	if(verbosity == 'y')
+    cout << "Capacity of each vehicle: " << capacity << endl;
 
 	/* Criar um grafo completo respeitando a desigualdade triangular */
-    graph.createInstance(numberVertices);
-    if(verbosity == 'y')
-    	graph.printInstance();
+  graph.createInstance(numberVertices);
+
+  if(verbosity == 'y')
+  	graph.printInstance();
 
 	TabuSearchSVRP ts;
 
+  clock_t begin = clock();
+
 	svrpSol bestSol = ts.run(graph, numberVehicles, capacity);
+
+  clock_t end = clock();
+
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
   cout << "Melhor solucao viavel encontrada:" << endl;
 	for(int i = 0; i < bestSol.routes.size(); i++) {
@@ -44,12 +62,7 @@ int main() {
 		cout << endl;
 	}
 	cout << "Custo total: " << bestSol.expectedCost << endl;
-
-  /* Definir rotas do primeiro estágio aleatoriamente */
-	/*vector<vector<int>> routes = randomRoutes(numberVertices, numberVehicles);
-
-	cout << "Total expected length: ";
-	cout << totalExpectedLength(graph, capacity, routes) << endl;*/
+  cout << "Tempo de processamento: " << elapsed_secs << endl;
 
   return 0;
 

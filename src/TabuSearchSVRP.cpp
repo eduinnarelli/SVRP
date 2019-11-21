@@ -7,41 +7,88 @@
 // Fluxo de execução da busca tabu
 svrpSol TabuSearchSVRP::run(Graph inst, int numVehicles, int capacity) {
 
-	initialize(inst, numVehicles, capacity);
-	int i;
-	char next = 'n';
-
 	if(inst.numberVertices > 2) {
+
+		initialize(inst, numVehicles, capacity);
+		int i;
+		char next = 'n';
+
 		for (i = 0; i < MAX_ITERATIONS; i++) {
 
-			//cout << "ITERACAO " << i << endl;
-			//cout << "penalty = " << penalty << endl;
+			if(verbosity == 'y'){
+				cout << "ITERACAO " << i << endl;
+				cout << "penalty = " << penalty << endl;
+			}
+
 			neighbourhoodSearch();
 			update();
 
 			// Intensificar ou terminar
 			if(this->currNoImprovement >= this->maxNoImprovement) {
 
+				if(verbosity == 'y')
+					cout << "INTENSIFY" << endl;
+
 				if (this->maxNoImprovement == 50*inst.numberVertices) {
 					this->numNearest = min(inst.numberVertices - 1, 10);
 					this->numSelected = inst.numberVertices - 1;
 					this->currNoImprovement = 0;
 					this->maxNoImprovement = 100;
-					this->sol = this->bestFeasibleSol;
+
+					if(!this->bestFeasibleSol.routes.empty()) {
+
+						if(verbosity == 'y')
+							cout << "Alguma solucao viavel foi encontrada com custo: " << this->bestFeasibleSol.expectedCost << endl;
+
+						this->sol = this->bestFeasibleSol;
+
+						/* Recuperar rota dos clientes e numero de rotas */
+						this->numRoutes = 0;
+						for(int j = 0; j < this->sol.routes.size(); j++) {
+							for(int k = 0; k < this->sol.routes[j].size(); k++) {
+								routeOfClient[this->sol.routes[j][k]] = j;
+							}
+							this->numRoutes++;
+						}
+					}
+
+					else {
+
+						if(verbosity == 'y')
+							cout << "Nenhuma solucao viavel encontrada" << endl;
+
+						this->sol.routes.clear();
+						this->numRoutes = 0;
+
+					  // Rotas de ida e volta ao depósito
+					  for (int j = 1; j < this->g.numberVertices; j++) {
+
+					    vector<int> route(1, j);
+					    this->sol.routes.push_back(route);
+					    this->routeOfClient[j] = j-1;
+							this->numRoutes++;
+
+					  }
+						this->sol.expectedCost = penalizedExpectedLength(this->sol.routes);
+					}
+
 				} else {
 					break;
 				}
 
 			}
-			/*
-			//cout << "Ir para a proxima iteracao? (y/n)" << endl;
-			cin >> next;
-			if(next != 'y') {
-				break;
-			}
-			*/cout << "Number of iterations: " << i << endl;
+
 		}
-		//cout << "Number of iterations: " << i << endl;
+
+	}
+
+	else {
+
+		this->bestFeasibleSol.routes.clear();
+		vector<int> route(1, 1);
+		this->bestFeasibleSol.routes.push_back(route);
+		this->bestFeasibleSol.expectedCost = totalExpectedLength(inst, capacity, this->bestFeasibleSol.routes);
+
 	}
 
 	return this->bestFeasibleSol;
@@ -50,7 +97,8 @@ svrpSol TabuSearchSVRP::run(Graph inst, int numVehicles, int capacity) {
 /* Etapa 1: construir solução e estruturas iniciais */
 void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
 
-	//cout << endl << "INITIALIZE" << endl;
+	if(verbosity == 'y')
+		cout << endl << "INITIALIZE" << endl;
 
 	this->g = inst;
   this->numVehicles = numVehicles;
@@ -59,6 +107,7 @@ void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
   int h = min(this->g.numberVertices - 1, 10);
 
 	srand(time(0));
+	this->closestNeighbours.clear();
 
   // Computar os h vizinhos mais próximos de cada vértice
   for (int i = 0; i < this->g.numberVertices; i++) {
@@ -97,13 +146,16 @@ void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
   this->sol.expectedCost = penalizedExpectedLength(this->sol.routes);
 	this->bestPenalExpCost = this->sol.expectedCost;
 
-	//cout << "Demandas relativas:" << endl;
+	if(verbosity == 'y')
+		cout << "Demandas relativas:" << endl;
 
   // Coeficiente que relaciona a demanda esperada do vértice com a total
   for (int i = 1; i < this->g.numberVertices; i++) {
 
     relativeDemand.push_back(this->g.expectedDemand[i] / this->g.totalExpectedDemand);
-		//cout << relativeDemand[i-1] << endl;
+
+		if(verbosity == 'y')
+			cout << relativeDemand[i-1] << endl;
 
   }
 
@@ -119,20 +171,29 @@ void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
       this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
   } else {
       this->numInfeasibleNearby = 0;
-      this->bestFeasibleSol.expectedCost = this->bestPenalExpCost;
-      this->bestFeasibleSol.routes = this->sol.routes;
+			if(numVehicles == this->g.numberVertices - 1) {
+      	this->bestFeasibleSol.expectedCost = this->sol.expectedCost;
+      	this->bestFeasibleSol.routes = this->sol.routes;
+			}
+			else {
+				this->bestFeasibleSol.routes.clear();
+				this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
+			}
   }
 
   this->maxNoImprovement = 50*this->g.numberVertices;
 
-	//cout << "END_INITIALIZE" << endl << endl;
+	if(verbosity == 'y')
+		cout << "END_INITIALIZE" << endl << endl;
 }
 
 
 /* Etapa 2: avaliar soluções a partir de movimentos entre vizinhos */
 void TabuSearchSVRP::neighbourhoodSearch() {
 
-	//cout << "NEIGHBOURHOOD_SEARCH" << endl;
+	if(verbosity == 'y')
+		cout << "NEIGHBOURHOOD_SEARCH" << endl;
+
 	vector<routeMove> bestMoves;
 
   this->itCount++;
@@ -140,15 +201,6 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 
 	srand(time(0));
 
-	//Escolher clientes aleatoriamente
-	/* Desnecessario ja que pegamos aleatoriamente depois de qualquer jeito
-	vector<int> customers(this->g.numberVertices - 1);
-	iota(customers.begin(), customers.end(), 1);
-
-  random_shuffle(customers.begin(), customers.end(), [](int i){
-  	return rand()%i;
-  });
-	*/
 	vector<int> customers;
 	for(int i = 0; i < this->g.numberVertices - 1; i++) {
 		customers.push_back(i+1);
@@ -170,18 +222,12 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 		/* Computar o custo aproximado de se remover o cliente de sua rota e
     	inserí-lo imediatamente ou antes do vizinho escolhido. */
 
-		if(sol.routes[routeOfClient[newMove.client]].size() == 1) {
-			this->numRoutes--;
-		}
-
 		newMove.approxCost = approxMoveCost(newMove);
 
-		if(sol.routes[routeOfClient[newMove.client]].size() == 1) {
-			this->numRoutes++;
+		if(verbosity == 'y'){
+			cout << "Movimento " << i << ": " << newMove.client << " " << newMove.neighbour << endl;
+			cout << "Custo: " << newMove.approxCost << endl;
 		}
-
-		//cout << "Movimento " << i << ": " << newMove.client << " " << newMove.neighbour << endl;
-		//cout << "Custo: " << newMove.approxCost << endl;
 
 		// Inserir na lista de movimentos em ordem não-decrescente
 		auto pos = find_if(bestMoves.begin(), bestMoves.end(), [newMove](routeMove m){
@@ -191,31 +237,36 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 		bestMoves.insert(pos, newMove);
   }
 
-	//cout << "bestMoves: " << endl;
+	if(verbosity == 'y')
+		cout << "bestMoves: " << endl;
+
 	for(int i = 0; i < bestMoves.size(); i++) {
-		//cout << bestMoves[i].approxCost << " ";
+
+		if(verbosity == 'y')
+			cout << bestMoves[i].approxCost << " ";
+
 	}
-	//cout << endl;
+
+	if(verbosity == 'y')
+		cout << endl;
 
 	/* Analisar os 5 primeiros movimentos. Se algum deles for melhor que a solução
 	atual, mesmo que seja um movimento tabu (por causa do critério de aspiração),
 	então o menor destes movimentos será realizado. Se não, o melhor movimento
 	não tabu é realizado, analisando em blocos de 5 */
-
 	int numTabuMoves = 0;
 	routeMove bestMoveNotTabu;
 	double bestMovePenalExpCost = numeric_limits<double>::max(), bestMoveNotTabuPenalExpCost = numeric_limits<double>::max();
 	vector<vector<int>> bestRoutes, bestNotTabuRoutes;
 	this->moveDone.valid = false;
 	bestMoveNotTabu.valid = false;
-	bool currLessRoute, bestMoveLessRoute = false;
 
 	for(int i = 0; i < min(5,(int)bestMoves.size()); i++) {
 
 		routeMove currMove = bestMoves[i];
-		currLessRoute = false;
 
-		//cout << "Analisando movimento " << i << ": " << currMove.client << " " << currMove.neighbour << endl;
+		if(verbosity == 'y')
+			cout << "Analisando movimento " << i << ": " << currMove.client << " " << currMove.neighbour << endl;
 
 		// Checar se é um movimento tabu
 		auto tabuPos = find_if(tabuMoves.begin(), tabuMoves.end(), [currMove](routeMove m){
@@ -231,11 +282,18 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 
 				vector<int> sameRoute = actualSol[routeOfClient[currMove.client]];
 
-				//cout << "Rota de ambos antes da troca: ";
+				if(verbosity == 'y')
+					cout << "Rota de ambos antes da troca: ";
+
 				for(int j = 0; j < sameRoute.size(); j++) {
-					//cout << sameRoute[j] << " ";
+
+					if(verbosity == 'y')
+						cout << sameRoute[j] << " ";
+
 				}
-				//cout << endl;
+
+				if(verbosity == 'y')
+					cout << endl;
 
 				vector<int>::iterator clientPos, neighbourPos;
 				for(int j = 0; j < sameRoute.size(); j++) {
@@ -256,13 +314,21 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 					sameRoute.insert(neighbourPos, currMove.client);
 				}
 
-				//cout << "Rota de ambos apos a troca: ";
+				if(verbosity == 'y')
+					cout << "Rota de ambos apos a troca: ";
+
 				for(int j = 0; j < sameRoute.size(); j++) {
-					//cout << sameRoute[j] << " ";
+
+					if(verbosity == 'y')
+						cout << sameRoute[j] << " ";
+
 				}
-				//cout << endl;
+
+				if(verbosity == 'y')
+					cout << endl;
 
 				actualSol[routeOfClient[currMove.client]] = sameRoute;
+
 				// Computar custo esperado e armazenar a melhor solução encontrada
 				movePenalExpCost = penalizedExpectedLength(actualSol);
 		}
@@ -277,43 +343,64 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 				return x == neighbour;
 			});
 
-			//cout << "Rota do vizinho antes de ser adicionado: ";
+			if(verbosity == 'y')
+				cout << "Rota do vizinho antes de ser adicionado: ";
+
 			for(int j = 0; j < neighbourRoute.size(); j++) {
-				//cout << neighbourRoute[j] << " ";
+
+				if(verbosity == 'y')
+					cout << neighbourRoute[j] << " ";
+
 			}
-			//cout << endl;
+
+			if(verbosity == 'y')
+				cout << endl;
 
 			neighbourRoute.insert(neighbourPos, currMove.client);
 
-			//cout << "Rota do vizinho apos ser adicionado: ";
-			for(int j = 0; j < neighbourRoute.size(); j++) {
-				//cout << neighbourRoute[j] << " ";
-			}
-			//cout << endl;
+			if(verbosity == 'y')
+				cout << "Rota do vizinho apos ser adicionado: ";
 
-			//cout << "Rota do cliente antes de ser removido: ";
-			for(int j = 0; j < clientRoute.size(); j++) {
-				//cout << clientRoute[j] << " ";
+			for(int j = 0; j < neighbourRoute.size(); j++) {
+
+				if(verbosity == 'y')
+					cout << neighbourRoute[j] << " ";
+
 			}
-			//cout << endl;
+
+			if(verbosity == 'y'){cout << endl;}
+
+			if(verbosity == 'y')
+				cout << "Rota do cliente antes de ser removido: ";
+
+			for(int j = 0; j < clientRoute.size(); j++) {
+
+				if(verbosity == 'y')
+					cout << clientRoute[j] << " ";
+
+			}
+
+			if(verbosity == 'y')
+				cout << endl;
 
 			// Remover cliente da sua rota e inserir na rota vizinha
-			clientRoute.erase(
-				remove(clientRoute.begin(), clientRoute.end(), currMove.client)//,
-				//clientRoute.end()
-			);
+			clientRoute.erase(remove(clientRoute.begin(), clientRoute.end(), currMove.client));
 
-			//cout << "Rota do cliente apos ser removido: ";
+			if(verbosity == 'y')
+				cout << "Rota do cliente apos ser removido: ";
+
 			for(int j = 0; j < clientRoute.size(); j++) {
-				//cout << clientRoute[j] << " ";
-			}
-			//cout << endl;
 
-			if (clientRoute.empty()) {
-				//remove(actualSol.begin(), actualSol.end(), clientRoute);
-				this->numRoutes--;
-				currLessRoute = true;
+				if(verbosity == 'y')
+					cout << clientRoute[j] << " ";
+
 			}
+
+			if(verbosity == 'y')
+				cout << endl;
+
+			if (clientRoute.empty())
+				this->numRoutes--;
 
 			actualSol[routeOfClient[currMove.client]] = clientRoute;
 			actualSol[routeOfClient[currMove.neighbour]] = neighbourRoute;
@@ -321,16 +408,14 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 			// Computar custo esperado e armazenar a melhor solução encontrada
 			movePenalExpCost = penalizedExpectedLength(actualSol);
 
-			if (clientRoute.empty()) {
+			if (clientRoute.empty())
 				this->numRoutes++;
-			}
 		}
 
 		if (movePenalExpCost < bestMovePenalExpCost) {
 			bestMovePenalExpCost = movePenalExpCost;
 			bestRoutes = actualSol;
 			this->moveDone = currMove;
-			bestMoveLessRoute = currLessRoute;
 		}
 
 		if(notTabu) {
@@ -338,149 +423,45 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 				bestMoveNotTabuPenalExpCost = movePenalExpCost;
 				bestNotTabuRoutes = actualSol;
 				bestMoveNotTabu = currMove;
-				bestMoveLessRoute = currLessRoute;
 			}
 		}
 	}
 
-/* Possível critério de aspiração */
-if(bestMovePenalExpCost < sol.expectedCost) {
-	sol.expectedCost = bestMovePenalExpCost;
-	sol.routes = bestRoutes;
-	if(bestMoveLessRoute) {
-		this->numRoutes--;
+	/* Possível critério de aspiração */
+	if(bestMovePenalExpCost < sol.expectedCost) {
+		sol.expectedCost = bestMovePenalExpCost;
+		sol.routes = bestRoutes;
+		return;
 	}
-	return;
-}
 
-else if(numTabuMoves == 5) {
+	else if(numTabuMoves == 5) {
 
-	numTabuMoves = 0;
-	bestMovePenalExpCost = numeric_limits<double>::max();
-	bestMoveLessRoute = false;
-	bestMoveNotTabu.valid = false;
+		numTabuMoves = 0;
+		bestMovePenalExpCost = numeric_limits<double>::max();
+		this->moveDone.valid = false;
+		bestMoveNotTabu.valid = false;
 
-	for(int i = 5; i < bestMoves.size(); i++) {
+		for(int i = 5; i < bestMoves.size(); i++) {
 
-		if(i > 5 && i % 5 == 0 && numTabuMoves != 5)
-			break;
-		else if(i % 5 == 0 && numTabuMoves == 5)
-			numTabuMoves = 0;
+			if(i > 5 && i % 5 == 0 && numTabuMoves != 5)
+				break;
+			else if(i % 5 == 0 && numTabuMoves == 5)
+				numTabuMoves = 0;
 
-		routeMove currMove = bestMoves[i];
-		currLessRoute = false;
+			routeMove currMove = bestMoves[i];
 
-		//cout << "Analisando movimento " << i << ": " << currMove.client << " " << currMove.neighbour << endl;
+			if(verbosity == 'y')
+				cout << "Analisando movimento " << i << ": " << currMove.client << " " << currMove.neighbour << endl;
 
-		// Checar se é um movimento tabu
-		auto tabuPos = find_if(tabuMoves.begin(), tabuMoves.end(), [currMove](routeMove m){
-			return m == currMove;
-		});
+			// Checar se é um movimento tabu
+			auto tabuPos = find_if(tabuMoves.begin(), tabuMoves.end(), [currMove](routeMove m){
+				return m == currMove;
+			});
 
-		if(tabuPos != tabuMoves.end()) {
-			numTabuMoves++;
-			continue;
-		}
-
-		vector<vector<int>> actualSol = this->sol.routes;
-
-		vector<int> clientRoute = actualSol[routeOfClient[currMove.client]];
-		vector<int> neighbourRoute = actualSol[routeOfClient[currMove.neighbour]];
-
-		int neighbour = currMove.neighbour;
-		auto neighbourPos = find_if(neighbourRoute.begin(), neighbourRoute.end(), [neighbour](int x){
-			return x == neighbour;
-		});
-
-		//cout << "Rota do vizinho antes de ser adicionado: ";
-		for(int j = 0; j < neighbourRoute.size(); j++) {
-			//cout << neighbourRoute[j] << " ";
-		}
-		//cout << endl;
-
-		neighbourRoute.insert(neighbourPos, currMove.client);
-
-		//cout << "Rota do vizinho apos ser adicionado: ";
-		for(int j = 0; j < neighbourRoute.size(); j++) {
-			//cout << neighbourRoute[j] << " ";
-		}
-		//cout << endl;
-
-		//cout << "Rota do cliente antes de ser removido: ";
-		for(int j = 0; j < clientRoute.size(); j++) {
-			//cout << clientRoute[j] << " ";
-		}
-		//cout << endl;
-
-		// Remover cliente da sua rota e inserir na rota vizinha
-		clientRoute.erase(
-			remove(clientRoute.begin(), clientRoute.end(), currMove.client),
-			clientRoute.end()
-		);
-
-		//cout << "Rota do cliente apos ser removido: ";
-		for(int j = 0; j < clientRoute.size(); j++) {
-			//cout << clientRoute[j] << " ";
-		}
-		//cout << endl;
-
-		if (clientRoute.empty()) {
-			remove(actualSol.begin(), actualSol.end(), clientRoute);
-			this->numRoutes--;
-			currLessRoute = true;
-		}
-
-		actualSol[routeOfClient[currMove.client]] = clientRoute;
-		actualSol[routeOfClient[currMove.neighbour]] = neighbourRoute;
-
-		// Computar custo esperado e armazenar a melhor solução encontrada
-		double movePenalExpCost = penalizedExpectedLength(actualSol);
-
-		if (clientRoute.empty()) {
-			this->numRoutes++;
-		}
-
-		if (movePenalExpCost < bestMoveNotTabuPenalExpCost) {
-			bestMoveNotTabuPenalExpCost = movePenalExpCost;
-			bestNotTabuRoutes = actualSol;
-			bestMoveNotTabu = currMove;
-			bestMoveLessRoute = currLessRoute;
-		}
-	}
-}
-
-this->moveDone = bestMoveNotTabu;
-if(this->moveDone.valid) {
-	sol.expectedCost = bestMoveNotTabuPenalExpCost;
-	sol.routes = bestNotTabuRoutes;
-	if(bestMoveLessRoute) {
-		this->numRoutes--;
-	}
-}
-/*
-	bool allTabu = true;
-	double bestMovePenalExpCost = numeric_limits<double>::max();
-	vector<vector<int>> bestRoutes;
-
-	for (int i = 0; i < bestMoves.size(); i++) {
-
-		if (i % 5 == 0 && !allTabu)
-			break;
-
-		routeMove currMove = bestMoves[i];
-
-		//cout << "Analisando movimento " << i << ": " << currMove.client << " " << currMove.neighbour << endl;
-
-		// Checar se é um movimento tabu
-		auto tabuPos = find_if(tabuMoves.begin(), tabuMoves.end(), [currMove](routeMove m){
-			return m == currMove;
-		});
-
-		bool isTabu = (tabuPos != tabuMoves.end());
-
-		if (!isTabu) {
-
-			//cout << "Movimento "<< i << " nao eh tabu" << endl;
+			if(tabuPos != tabuMoves.end()) {
+				numTabuMoves++;
+				continue;
+			}
 
 			vector<vector<int>> actualSol = this->sol.routes;
 
@@ -488,47 +469,69 @@ if(this->moveDone.valid) {
 			vector<int> neighbourRoute = actualSol[routeOfClient[currMove.neighbour]];
 
 			int neighbour = currMove.neighbour;
-
 			auto neighbourPos = find_if(neighbourRoute.begin(), neighbourRoute.end(), [neighbour](int x){
 				return x == neighbour;
 			});
 
-			//cout << "Rota do vizinho antes de ser adicionado: ";
+			if(verbosity == 'y')
+				cout << "Rota do vizinho antes de ser adicionado: ";
+
 			for(int j = 0; j < neighbourRoute.size(); j++) {
-				//cout << neighbourRoute[j] << " ";
+
+				if(verbosity == 'y')
+					cout << neighbourRoute[j] << " ";
+
 			}
-			//cout << endl;
+
+			if(verbosity == 'y')
+				cout << endl;
 
 			neighbourRoute.insert(neighbourPos, currMove.client);
 
-			//cout << "Rota do vizinho apos ser adicionado: ";
-			for(int j = 0; j < neighbourRoute.size(); j++) {
-				//cout << neighbourRoute[j] << " ";
-			}
-			//cout << endl;
+			if(verbosity == 'y')
+				cout << "Rota do vizinho apos ser adicionado: ";
 
-			//cout << "Rota do cliente antes de ser removido: ";
-			for(int j = 0; j < clientRoute.size(); j++) {
-				//cout << clientRoute[j] << " ";
+			for(int j = 0; j < neighbourRoute.size(); j++) {
+
+				if(verbosity == 'y')
+					cout << neighbourRoute[j] << " ";
+
 			}
-			//cout << endl;
+
+			if(verbosity == 'y')
+				cout << endl;
+
+			if(verbosity == 'y')
+				cout << "Rota do cliente antes de ser removido: ";
+
+			for(int j = 0; j < clientRoute.size(); j++) {
+
+				if(verbosity == 'y')
+					cout << clientRoute[j] << " ";
+
+			}
+
+			if(verbosity == 'y')
+				cout << endl;
 
 			// Remover cliente da sua rota e inserir na rota vizinha
-			clientRoute.erase(
-				remove(clientRoute.begin(), clientRoute.end(), currMove.client),
-				clientRoute.end()
-			);
+			clientRoute.erase(remove(clientRoute.begin(), clientRoute.end(), currMove.client));
 
-			//cout << "Rota do cliente apos ser removido: ";
+			if(verbosity == 'y')
+				cout << "Rota do cliente apos ser removido: ";
+
 			for(int j = 0; j < clientRoute.size(); j++) {
-				//cout << clientRoute[j] << " ";
-			}
-			//cout << endl;
 
-			if (clientRoute.empty()) {
-				remove(actualSol.begin(), actualSol.end(), clientRoute);
-				this->numRoutes--;
+				if(verbosity == 'y')
+					cout << clientRoute[j] << " ";
+
 			}
+
+			if(verbosity == 'y')
+				cout << endl;
+
+			if (clientRoute.empty())
+				this->numRoutes--;
 
 			actualSol[routeOfClient[currMove.client]] = clientRoute;
 			actualSol[routeOfClient[currMove.neighbour]] = neighbourRoute;
@@ -536,65 +539,83 @@ if(this->moveDone.valid) {
 			// Computar custo esperado e armazenar a melhor solução encontrada
 			double movePenalExpCost = penalizedExpectedLength(actualSol);
 
-			if (clientRoute.empty()) {
+			if (clientRoute.empty())
 				this->numRoutes++;
-			}
 
-			if (movePenalExpCost < bestMovePenalExpCost) {
-				bestMovePenalExpCost = movePenalExpCost;
-				bestRoutes = actualSol;
-				this->moveDone = currMove;
+			if (movePenalExpCost < bestMoveNotTabuPenalExpCost) {
+				bestMoveNotTabuPenalExpCost = movePenalExpCost;
+				bestNotTabuRoutes = actualSol;
+				bestMoveNotTabu = currMove;
 			}
-
 		}
-
 	}
 
-	// Atualizar solução dessa iteração
-	this->sol.routes = bestRoutes;
-	this->sol.expectedCost = bestMovePenalExpCost;
-*/
+	this->moveDone = bestMoveNotTabu;
+	if(this->moveDone.valid) {
+		sol.expectedCost = bestMoveNotTabuPenalExpCost;
+		sol.routes = bestNotTabuRoutes;
+	}
+
 }
 
 /* Etapas 3 e 4: Atualizar estruturas, parâmetros e melhor solução conforme
 a viabilidade da solução corrente. */
 void TabuSearchSVRP::update() {
 
-	//cout << "UPDATE" << endl;
+	if(verbosity == 'y')
+		cout << "UPDATE" << endl;
+
 	if(this->moveDone.valid) {
-		//cout << "Movimento escolhido: " << this->moveDone.client << " " << this->moveDone.neighbour << endl;
-	}
-	else {
-		//cout << "Todos os movimentos sao tabu" << endl;
-	}
 
-	//cout << "Numero de rotas atual: " << this->numRoutes << endl;
-
-	// Checar se ao menos melhorou
-	if (this->sol.expectedCost < this->bestPenalExpCost) {
-		//cout << "Solucao melhorou (F(x) < F*)" << endl;
-		this->bestPenalExpCost = this->sol.expectedCost;
-		this->currNoImprovement = 0;
-	}
-
-	// Inviável
-	if (this->numVehicles < this->numRoutes) {
-		//cout << "Solucao inviavel" << endl;
-		this->numInfeasibleNearby += 1;
-
-	// Viável
-	} else {
-		//cout << "Solucao viavel" << endl;
-		if (this->sol.expectedCost < this->bestFeasibleSol.expectedCost) {
-			//cout << "Solucao viavel melhorou (F(x)=T(x) < T*)" << endl;
-			this->bestFeasibleSol.expectedCost = this->sol.expectedCost;
-			this->bestFeasibleSol = this->sol;
+		this->numRoutes = 0;
+		for(int i = 0; i < this->sol.routes.size(); i++) {
+			if(!this->sol.routes[i].empty())
+				this->numRoutes++;
 		}
 
-	}
+		if(verbosity == 'y')
+			cout << "Movimento escolhido: " << this->moveDone.client << " " << this->moveDone.neighbour << endl;
 
-	srand(time(0));
-	if(this->moveDone.valid) {
+		if(verbosity == 'y')
+			cout << "Numero de rotas atual: " << this->numRoutes << endl;
+
+		// Checar se ao menos melhorou
+		if (this->sol.expectedCost < this->bestPenalExpCost) {
+
+			if(verbosity == 'y')
+				cout << "Solucao melhorou (F(x) < F*)" << endl;
+
+			this->bestPenalExpCost = this->sol.expectedCost;
+			this->currNoImprovement = 0;
+		}
+
+		// Inviável
+		if (this->numRoutes != this->numVehicles) {
+
+			if(verbosity == 'y')
+				cout << "Solucao inviavel" << endl;
+
+			this->numInfeasibleNearby += 1;
+
+		// Viável
+		} else {
+			this->numInfeasibleNearby = 0;
+
+			if(verbosity == 'y')
+				cout << "Solucao viavel" << endl;
+
+			if (this->sol.expectedCost < this->bestFeasibleSol.expectedCost) {
+
+				if(verbosity == 'y')
+					cout << "Solucao viavel melhorou (F(x)=T(x) < T*)" << endl;
+
+				this->bestFeasibleSol.expectedCost = this->sol.expectedCost;
+				this->bestFeasibleSol = this->sol;
+			}
+
+		}
+
+		srand(time(0));
 		routeOfClient[moveDone.client] = routeOfClient[moveDone.neighbour];
 		if(this->g.numberVertices > 5) {
 			this->moveDone.tabuDuration = this->itCount + (this->g.numberVertices - 5) + (rand() % 6);
@@ -606,6 +627,9 @@ void TabuSearchSVRP::update() {
 		// Inserir movimento realizado
 		this->tabuMoves.push_back(this->moveDone);
 	}
+
+	else if(verbosity == 'y')
+		cout << "Todos os movimentos sao tabu e nenhum melhora" << endl;
 
 	for (int i = 0; i < this->tabuMoves.size(); i++) {
 
@@ -633,8 +657,12 @@ void TabuSearchSVRP::update() {
 
 // Função objetivo com penalização de soluções inviáveis
 double TabuSearchSVRP::penalizedExpectedLength(vector<vector<int>> sol) {
+
 		double aux = totalExpectedLength(g, capacity, sol) + penalty*abs(this->numRoutes - numVehicles);
-		//cout << "Custo penalizado total: " << aux << endl;
+
+		if(verbosity=='y')
+			cout << "Custo penalizado total: " << aux << endl;
+
     return aux;
 }
 
@@ -719,8 +747,11 @@ double TabuSearchSVRP::approxMoveCost(routeMove m) {
 
 	}
 
-	//cout << "Custo Aproximado:" << endl;
-	//cout << "beforeClient = " << beforeClient << " beforeNeighbour = " << beforeNeighbour << " afterClient = " << afterClient << endl;
+	if(verbosity == 'y') {
+		cout << "Custo Aproximado:" << endl;
+		cout << "beforeClient = " << beforeClient << " beforeNeighbour = " << beforeNeighbour << " afterClient = " << afterClient << endl;
+	}
+
 	if(routeOfClient[m.client] == routeOfClient[m.neighbour]) {
 
 		approxCost = approxInsertImpact(beforeNeighbour, m.client, m.neighbour)
@@ -728,34 +759,27 @@ double TabuSearchSVRP::approxMoveCost(routeMove m) {
 
 	} else {
 
-		double a = approxInsertImpact(beforeNeighbour, m.client, m.neighbour);
-		double b = approxInsertImpact(beforeClient, m.client, afterClient);
-		double c = maxRemovalCost(routeOfClient[m.neighbour])*relativeDemand[m.client - 1];
-		double d = removalCost(routeOfClient[m.client], m.client);
-		//cout << "a = " << a << " b = " << b << " c = " << c << " d = " << d << endl;
-		approxCost = a - b + c - d;
-		/*
 		approxCost = approxInsertImpact(beforeNeighbour, m.client, m.neighbour)
 					- approxInsertImpact(beforeClient, m.client, afterClient)
 					+ maxRemovalCost(routeOfClient[m.neighbour])*relativeDemand[m.client - 1]
 					- removalCost(routeOfClient[m.client], m.client);
-		*/
 
+	}
+
+	// Se a solução for inviável e numRoutes > numVehicles
+	if(numRoutes > numVehicles) {
+		approxCost += penalty*(1/(double)(sol.routes[routeOfClient[m.neighbour]].size()+1)
+													-1/(double)(sol.routes[routeOfClient[m.client]].size()));
 	}
 
 	// Se a solução for viável
-	if(numRoutes <= numVehicles) {
+	else {
 		if(sol.routes[routeOfClient[m.client]].size() == 1) {
-			approxCost += penalty*(numRoutes - 1 - numVehicles) - penalty*(numRoutes - numVehicles);
+			approxCost += penalty*abs(numRoutes - 1 - numVehicles) - penalty*abs(numRoutes - numVehicles);
 		}
 		else {
-			approxCost += penalty*(numRoutes - numVehicles) - penalty*(numRoutes - numVehicles);
+			approxCost += penalty*abs(numRoutes - numVehicles) - penalty*abs(numRoutes - numVehicles);
 		}
-	}
-	// Se a solução for inviável
-	else {
-		approxCost += penalty*(1/(double)(sol.routes[routeOfClient[m.neighbour]].size()+1)
-													-1/(double)(sol.routes[routeOfClient[m.client]].size()));
 	}
 
 	return approxCost;

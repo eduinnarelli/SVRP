@@ -91,7 +91,7 @@ struct svrpSol {
 class TabuSearchSVRP {
 
     Graph g;
-    double penalty, bestPenalExpCost;
+    long double penalty, bestPenalExpCost;
     int numVehicles, capacity, numSelected, numNearest, numRoutes;
     int itCount, numInfeasibleNearby;
     int currNoImprovement, maxNoImprovement;
