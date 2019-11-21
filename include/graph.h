@@ -5,12 +5,14 @@ using namespace std;
 extern char verbosity;
 
 struct vertex {
+  
     double x, y;
     double probDemand[21];
     double probOfPresence = 1;
 };
 
 struct edge {
+
     int u, v;
     double dist;
 };
@@ -24,7 +26,7 @@ public:
     vector<double> expectedDemand;
     vector<vertex> vertices;
     vector<vector<double>> adjMatrix;
-    
+
     void createInstance(int n);
     void computeDistances();
     void printInstance();
