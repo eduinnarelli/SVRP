@@ -2,43 +2,77 @@
 #include <algorithm>
 #include <ctime>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 #include <stdio.h>
 #include <io.h>
 #include "TabuSearchSVRP.h"
 
 char verbosity;
 
-int main() {
+int main(int argc, const char **argv) {
 
   Graph graph;
   double fillingCoeff;
 	int capacity, numberVertices, numberVehicles;
   char saveFile;
+  ifstream instanceFile;
+  stringstream input;
+  string line;
 
-  do {
-    cout << "Enter with number of vertices including depot (>1): ";
-    cin >> numberVertices;
-  } while(numberVertices <= 1);
+  if(argc == 2) {
+    instanceFile.open(argv[1], std::ios::in | std::ios::binary);
 
-	do{
-    cout << "Enter with number of vehicles (>=1 and less then number of vertices): ";
-    cin >> numberVehicles;
-  } while(numberVehicles < 1 || numberVehicles > numberVertices-1);
+  	if (!instanceFile.is_open()) {
+    		printf("ERROR: Not possible to open instance file.\n");
+  		return 1;
+  	}
 
-  do {
-    cout << "Enter with filling coefficient in interval (0,1]: ";
-    cin >> fillingCoeff;
-  } while(fillingCoeff <= 0 || fillingCoeff > 1);
+    getline(instanceFile, line);
+		input = stringstream(line);
+		input >> numberVertices;
+    getline(instanceFile, line);
+		input = stringstream(line);
+		input >> numberVehicles;
+    getline(instanceFile, line);
+    input = stringstream(line);
+    input >> fillingCoeff;
+    getline(instanceFile, line);
+    input = stringstream(line);
+    input >> verbosity;
+    getline(instanceFile, line);
+    input = stringstream(line);
+    input >> saveFile;
+  }
 
-  do {
-    cout << "Visualize all problem information in stdio? (y/n): ";
-    cin >> verbosity;
-  } while(verbosity != 'y' && verbosity != 'n');
+  else {
 
-  do {
-    cout << "Save best solution in txt file? (y/n): ";
-    cin >> saveFile;
-  } while(saveFile != 'y' && saveFile != 'n');
+    do {
+      cout << "Enter with number of vertices including depot (>1): ";
+      cin >> numberVertices;
+    } while(numberVertices <= 1);
+
+    do{
+      cout << "Enter with number of vehicles (>=1 and less then number of vertices): ";
+      cin >> numberVehicles;
+    } while(numberVehicles < 1 || numberVehicles > numberVertices-1);
+
+    do {
+      cout << "Enter with filling coefficient in interval (0,1]: ";
+      cin >> fillingCoeff;
+    } while(fillingCoeff <= 0 || fillingCoeff > 1);
+
+    do {
+      cout << "Visualize all problem information in stdio? (y/n): ";
+      cin >> verbosity;
+    } while(verbosity != 'y' && verbosity != 'n');
+
+    do {
+      cout << "Save best solution in txt file? (y/n): ";
+      cin >> saveFile;
+    } while(saveFile != 'y' && saveFile != 'n');
+
+  }
 
 	/* Capacidade regulada de acordo com os dados do problema */
 	capacity = max(int(10*(numberVertices-1)/(2*numberVehicles*fillingCoeff)),20);
