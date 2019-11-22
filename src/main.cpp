@@ -1,8 +1,10 @@
 #include <iomanip>
-#include "TabuSearchSVRP.h"
 #include <algorithm>
 #include <ctime>
 #include <fstream>
+#include <stdio.h>
+#include <io.h>
+#include "TabuSearchSVRP.h"
 
 char verbosity;
 
@@ -62,11 +64,13 @@ int main() {
 
   if(saveFile == 'y') {
     ofstream outputFile;
-    string nameOutputFile = "";
+    string nameOutputFile = "output\\";
 
     nameOutputFile += "BestSolN" + to_string(numberVertices)
                     + "M" + to_string(numberVehicles)
                     + "f0" + to_string((int)(10*fillingCoeff)) + ".txt";
+
+    mkdir("output");
 
     outputFile.open(nameOutputFile, std::ios::app);
 
