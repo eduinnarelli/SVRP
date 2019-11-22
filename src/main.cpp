@@ -102,7 +102,7 @@ int main(int argc, const char **argv) {
 
     nameOutputFile += "BestSolN" + to_string(numberVertices)
                     + "M" + to_string(numberVehicles)
-                    + "f0" + to_string((int)(10*fillingCoeff)) + ".txt";
+                    + "f" + to_string(fillingCoeff).substr(0,4) + ".txt";
 
     mkdir("output");
 
