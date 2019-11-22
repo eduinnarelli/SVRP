@@ -2,6 +2,7 @@
 #include "TabuSearchSVRP.h"
 #include <algorithm>
 #include <ctime>
+#include <fstream>
 
 char verbosity;
 
@@ -10,6 +11,7 @@ int main() {
   Graph graph;
   double fillingCoeff;
 	int capacity, numberVertices, numberVehicles;
+  char saveFile;
 
   do {
     cout << "Enter with number of vertices including depot (>1): ";
@@ -27,9 +29,14 @@ int main() {
   } while(fillingCoeff <= 0 || fillingCoeff > 1);
 
   do {
-    cout << "Visualize all problem information? (y/n): ";
+    cout << "Visualize all problem information in stdio? (y/n): ";
     cin >> verbosity;
   } while(verbosity != 'y' && verbosity != 'n');
+
+  do {
+    cout << "Save best solution in txt file? (y/n): ";
+    cin >> saveFile;
+  } while(saveFile != 'y' && saveFile != 'n');
 
 	/* Capacidade regulada de acordo com os dados do problema */
 	capacity = max(int(10*(numberVertices-1)/(2*numberVehicles*fillingCoeff)),20);
@@ -53,16 +60,60 @@ int main() {
 
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-  cout << "Melhor solucao viavel encontrada:" << endl;
-	for(int i = 0; i < bestSol.routes.size(); i++) {
-		cout << "Rota " << i << ": ";
-		for(int j = 0; j < bestSol.routes[i].size(); j++) {
-			cout << bestSol.routes[i][j] << " ";
-		}
-		cout << endl;
-	}
-	cout << "Custo total: " << bestSol.expectedCost << endl;
-  cout << "Tempo de processamento: " << elapsed_secs << endl;
+  if(saveFile == 'y') {
+    ofstream outputFile;
+    string nameOutputFile = "";
+
+    nameOutputFile += "BestSolN" + to_string(numberVertices)
+                    + "M" + to_string(numberVehicles)
+                    + "f0" + to_string((int)(10*fillingCoeff)) + ".txt";
+
+    outputFile.open(nameOutputFile, std::ios::app);
+
+    if (outputFile.is_open())  {
+
+      if(bestSol.routes.size() == 0)
+          outputFile << "Nenhuma solucao viavel encontrada" <<  endl;
+
+      else {
+
+        for(int i = 0; i < bestSol.routes.size(); i++) {
+      		outputFile << "Rota " << i << ": ";
+      		for(int j = 0; j < bestSol.routes[i].size(); j++) {
+      			outputFile << bestSol.routes[i][j] << " ";
+      		}
+      		outputFile << endl;
+      	}
+      }
+
+      outputFile << "Custo total: " << bestSol.expectedCost << endl;
+      outputFile << "Tempo de processamento: " << elapsed_secs << endl << endl;
+
+      outputFile.close();
+    }
+
+    else cout << "Unable to open file";
+  }
+
+  else {
+
+    if(bestSol.routes.size() == 0)
+        cout << "Nenhuma solucao viavel encontrada" <<  endl;
+
+    else {
+      for(int i = 0; i < bestSol.routes.size(); i++) {
+        cout << "Rota " << i << ": ";
+        for(int j = 0; j < bestSol.routes[i].size(); j++) {
+          cout << bestSol.routes[i][j] << " ";
+        }
+        cout << endl;
+      }
+    }
+
+    cout << "Custo total: " << bestSol.expectedCost << endl;
+    cout << "Tempo de processamento: " << elapsed_secs << endl << endl;
+
+  }
 
   return 0;
 
