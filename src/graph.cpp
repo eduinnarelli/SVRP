@@ -1,12 +1,4 @@
-#include<iostream>
-#include<algorithm>
-#include<cmath>
-#include<vector>
-#include<random>
-#include<string>
-#include<time.h>
 #include "graph.h"
-using namespace std;
 
 /*
 createInstance: Cria um grafo completo não-direcionado com "n" vértices
@@ -231,5 +223,59 @@ vector<int> Graph::TSP() {
     cout << "Cost of TSP route: " << minPathCost << endl;
 
     return minPath;
+
+}
+
+void Graph::drawGraph(string graphName) {
+
+  Palette palette;
+  Palette paletteW(true);
+
+  ListGraph g;
+  typedef ListGraph::Node Node;
+  typedef ListGraph::NodeIt NodeIt;
+  typedef ListGraph::Edge Edge;
+  typedef dim2::Point<int> Point;
+
+  vector<Node> nodes;
+
+  ListGraph::NodeMap<Point> coords(g);
+  ListGraph::NodeMap<int> colors(g);
+  ListGraph::NodeMap<int> shapes(g);
+  ListGraph::EdgeMap<int> ecolors(g);
+
+  for(int i = 0; i < this->numberVertices; i++) {
+
+    nodes.push_back(g.addNode());
+    coords[nodes[i]] = Point(this->vertices[i].x, this->vertices[i].y);
+
+  }
+
+  /* Destacar deposito */
+  colors[nodes[0]] = 1;
+  shapes[nodes[0]] = 1;
+
+  for(int i = 0; i < this->numberVertices; i++) {
+
+    for(int j = i+1; j < this->numberVertices; j++) {
+
+      if(this->adjMatrix[i][j] >= 0) {
+
+        Edge e = g.addEdge(nodes[i],nodes[j]);
+        ecolors[e] = this->adjMatrix[i][j];
+      }
+
+    }
+  }
+
+  cout << "Create " << graphName << endl;
+  graphToEps(g, graphName).
+    coords(coords).
+    title("Figura do grafo").
+    copyright("(C) 2003-2007 LEMON Project").
+    nodeColors(composeMap(palette,colors)).
+    edgeColors(composeMap(palette,ecolors)).
+    run();
+
 
 }

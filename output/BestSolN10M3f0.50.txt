@@ -50,3 +50,15 @@ Rota 8: 7 9
 Custo total: 246.845
 Tempo de processamento: 0.515
 
+Rota 0: 
+Rota 1: 
+Rota 2: 6 1 3 
+Rota 3: 
+Rota 4: 
+Rota 5: 
+Rota 6: 
+Rota 7: 7 8 
+Rota 8: 2 4 5 9 
+Custo total: 326.792
+Tempo de processamento: 0.33741
+

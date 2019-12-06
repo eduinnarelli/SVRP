@@ -1,0 +1,22 @@
+Rota 0: 
+Rota 1: 
+Rota 2: 
+Rota 3: 
+Rota 4: 19 9 13 16 
+Rota 5: 6 
+Rota 6: 3 
+Rota 7: 
+Rota 8: 
+Rota 9: 
+Rota 10: 
+Rota 11: 
+Rota 12: 
+Rota 13: 
+Rota 14: 
+Rota 15: 12 15 11 8 
+Rota 16: 
+Rota 17: 1 4 14 10 5 2 7 17 18 
+Rota 18: 
+Custo total: 413.144
+Tempo de processamento: 13.3073
+

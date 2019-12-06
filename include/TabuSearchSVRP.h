@@ -1,5 +1,3 @@
-#include "SVRP.h"
-
 #define MAX_ITERATIONS 10000
 
 /*

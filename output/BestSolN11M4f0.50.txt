@@ -1,0 +1,17 @@
+Nenhuma solucao viavel encontrada
+Custo total: 1.79769e+308
+Tempo de processamento: 0.231418
+
+Rota 0: 1 
+Rota 1: 
+Rota 2: 
+Rota 3: 
+Rota 4: 5 
+Rota 5: 4 2 9 6 
+Rota 6: 8 10 3 7 
+Rota 7: 
+Rota 8: 
+Rota 9: 
+Custo total: 485.213
+Tempo de processamento: 0.655029
+

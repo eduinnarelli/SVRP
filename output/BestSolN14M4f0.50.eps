@@ -1,0 +1,109 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%Title: Figura do grafo
+%%Copyright: (C) 2003-2007 LEMON Project
+%%Creator: LEMON, graphToEps()
+%%CreationDate: Fri Dec  6 09:51:05 2019
+%%BoundingBox: -12 38 982 762
+%%EndComments
+/lb { setlinewidth setrgbcolor newpath moveto
+      4 2 roll 1 index 1 index curveto stroke } bind def
+/l { setlinewidth setrgbcolor newpath moveto lineto stroke } bind def
+/c { newpath dup 3 index add 2 index moveto 0 360 arc closepath } bind def
+/sq { newpath 2 index 1 index add 2 index 2 index add moveto
+      2 index 1 index sub 2 index 2 index add lineto
+      2 index 1 index sub 2 index 2 index sub lineto
+      2 index 1 index add 2 index 2 index sub lineto
+      closepath pop pop pop} bind def
+/di { newpath 2 index 1 index add 2 index moveto
+      2 index             2 index 2 index add lineto
+      2 index 1 index sub 2 index             lineto
+      2 index             2 index 2 index sub lineto
+      closepath pop pop pop} bind def
+/nc { 0 0 0 setrgbcolor 5 index 5 index 5 index c fill
+     setrgbcolor 1.1 div c fill
+   } bind def
+/nsq { 0 0 0 setrgbcolor 5 index 5 index 5 index sq fill
+     setrgbcolor 1.1 div sq fill
+   } bind def
+/ndi { 0 0 0 setrgbcolor 5 index 5 index 5 index di fill
+     setrgbcolor 1.1 div di fill
+   } bind def
+/nfemale { 0 0 0 setrgbcolor 3 index 0.0909091 1.5 mul mul setlinewidth
+  newpath 5 index 5 index moveto 5 index 5 index 5 index 3.01 mul sub
+  lineto 5 index 4 index .7 mul sub 5 index 5 index 2.2 mul sub moveto
+  5 index 4 index .7 mul add 5 index 5 index 2.2 mul sub lineto stroke
+  5 index 5 index 5 index c fill
+  setrgbcolor 1.1 div c fill
+  } bind def
+/nmale {
+  0 0 0 setrgbcolor 3 index 0.0909091 1.5 mul mul setlinewidth
+  newpath 5 index 5 index moveto
+  5 index 4 index 1 mul 1.5 mul add
+  5 index 5 index 3 sqrt 1.5 mul mul add
+  1 index 1 index lineto
+  1 index 1 index 7 index sub moveto
+  1 index 1 index lineto
+  exch 5 index 3 sqrt .5 mul mul sub exch 5 index .5 mul sub lineto
+  stroke
+  5 index 5 index 5 index c fill
+  setrgbcolor 1.1 div c fill
+  } bind def
+/arrl 1 def
+/arrw 0.3 def
+/lrl { 2 index mul exch 2 index mul exch rlineto pop} bind def
+/arr { setrgbcolor /y1 exch def /x1 exch def /dy exch def /dx exch def
+       /w exch def /len exch def
+       newpath x1 dy w 2 div mul add y1 dx w 2 div mul sub moveto
+       len w sub arrl sub dx dy lrl
+       arrw dy dx neg lrl
+       dx arrl w add mul dy w 2 div arrw add mul sub
+       dy arrl w add mul dx w 2 div arrw add mul add rlineto
+       dx arrl w add mul neg dy w 2 div arrw add mul sub
+       dy arrl w add mul neg dx w 2 div arrw add mul add rlineto
+       arrw dy dx neg lrl
+       len w sub arrl sub neg dx dy lrl
+       closepath fill } bind def
+/cshow { 2 index 2 index moveto dup stringwidth pop
+         neg 2 div fosi .35 mul neg rmoveto show pop pop} def
+
+gsave
+10 dup scale
+%Arcs:
+gsave
+75 19 21 40 0 1 0 0.350487 l
+75 19 54 8 0 1 0 0.350487 l
+42 24 44 25 0 0 1 0.350487 l
+29 36 44 25 0 0 1 0.350487 l
+33 49 1 74 0 0 0 0.350487 l
+84 43 89 62 1 0 0 0.350487 l
+74 39 54 8 0 1 0 0.350487 l
+1 10 21 40 0 1 0 0.350487 l
+1 10 96 6 0 1 0 0.350487 l
+86 52 96 6 0 1 0 0.350487 l
+86 52 89 62 1 0 0 0.350487 l
+86 52 1 74 0 0 0 0.350487 l
+86 52 42 24 0 0 1 0.350487 l
+86 52 29 36 0 0 1 0.350487 l
+86 52 33 49 0 0 0 0.350487 l
+86 52 84 43 1 0 0 0.350487 l
+86 52 74 39 0 1 0 0.350487 l
+grestore
+%Nodes:
+gsave
+21 40 1.16829 0 0 0 nc
+54 8 1.16829 0 0 0 nc
+96 6 1.16829 0 0 0 nc
+75 19 1.16829 0 0 0 nc
+44 25 1.16829 0 0 0 nc
+89 62 1.16829 0 0 0 nc
+1 74 1.16829 0 0 0 nc
+42 24 1.16829 0 0 0 nc
+29 36 1.16829 0 0 0 nc
+33 49 1.16829 0 0 0 nc
+84 43 1.16829 0 0 0 nc
+74 39 1.16829 0 0 0 nc
+1 10 1.16829 0 0 0 nc
+86 52 1.16829 1 0 0 nc
+grestore
+grestore
+showpage

@@ -1,0 +1,9 @@
+Rota 0: 
+Rota 1: 4 6 2 
+Rota 2: 3 
+Rota 3: 
+Rota 4: 1 5 
+Rota 5: 
+Custo total: 301.927
+Tempo de processamento: 0.06613
+

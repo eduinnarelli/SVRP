@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "TabuSearchSVRP.h"
 
 vector<vector<double>> probTotalDemand(Graph g, vector<int> route);
 
@@ -19,3 +20,5 @@ double costCen(vector<vector<int>> A, vector<int> B, Graph g, vector<int> route,
 double bruteForce(Graph g, int capacity, vector<vector<int>> route);
 
 double bruteForceCost(Graph g, int capacity, vector<int> route);
+
+void drawRoutes(Graph g, svrpSol solution, string nameOutputFile);

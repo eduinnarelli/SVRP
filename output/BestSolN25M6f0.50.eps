@@ -1,0 +1,132 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%Title: Figura do grafo
+%%Copyright: (C) 2003-2007 LEMON Project
+%%Creator: LEMON, graphToEps()
+%%CreationDate: Fri Dec  6 09:36:23 2019
+%%BoundingBox: 6 -24 1014 1014
+%%EndComments
+/lb { setlinewidth setrgbcolor newpath moveto
+      4 2 roll 1 index 1 index curveto stroke } bind def
+/l { setlinewidth setrgbcolor newpath moveto lineto stroke } bind def
+/c { newpath dup 3 index add 2 index moveto 0 360 arc closepath } bind def
+/sq { newpath 2 index 1 index add 2 index 2 index add moveto
+      2 index 1 index sub 2 index 2 index add lineto
+      2 index 1 index sub 2 index 2 index sub lineto
+      2 index 1 index add 2 index 2 index sub lineto
+      closepath pop pop pop} bind def
+/di { newpath 2 index 1 index add 2 index moveto
+      2 index             2 index 2 index add lineto
+      2 index 1 index sub 2 index             lineto
+      2 index             2 index 2 index sub lineto
+      closepath pop pop pop} bind def
+/nc { 0 0 0 setrgbcolor 5 index 5 index 5 index c fill
+     setrgbcolor 1.1 div c fill
+   } bind def
+/nsq { 0 0 0 setrgbcolor 5 index 5 index 5 index sq fill
+     setrgbcolor 1.1 div sq fill
+   } bind def
+/ndi { 0 0 0 setrgbcolor 5 index 5 index 5 index di fill
+     setrgbcolor 1.1 div di fill
+   } bind def
+/nfemale { 0 0 0 setrgbcolor 3 index 0.0909091 1.5 mul mul setlinewidth
+  newpath 5 index 5 index moveto 5 index 5 index 5 index 3.01 mul sub
+  lineto 5 index 4 index .7 mul sub 5 index 5 index 2.2 mul sub moveto
+  5 index 4 index .7 mul add 5 index 5 index 2.2 mul sub lineto stroke
+  5 index 5 index 5 index c fill
+  setrgbcolor 1.1 div c fill
+  } bind def
+/nmale {
+  0 0 0 setrgbcolor 3 index 0.0909091 1.5 mul mul setlinewidth
+  newpath 5 index 5 index moveto
+  5 index 4 index 1 mul 1.5 mul add
+  5 index 5 index 3 sqrt 1.5 mul mul add
+  1 index 1 index lineto
+  1 index 1 index 7 index sub moveto
+  1 index 1 index lineto
+  exch 5 index 3 sqrt .5 mul mul sub exch 5 index .5 mul sub lineto
+  stroke
+  5 index 5 index 5 index c fill
+  setrgbcolor 1.1 div c fill
+  } bind def
+/arrl 1 def
+/arrw 0.3 def
+/lrl { 2 index mul exch 2 index mul exch rlineto pop} bind def
+/arr { setrgbcolor /y1 exch def /x1 exch def /dy exch def /dx exch def
+       /w exch def /len exch def
+       newpath x1 dy w 2 div mul add y1 dx w 2 div mul sub moveto
+       len w sub arrl sub dx dy lrl
+       arrw dy dx neg lrl
+       dx arrl w add mul dy w 2 div arrw add mul sub
+       dy arrl w add mul dx w 2 div arrw add mul add rlineto
+       dx arrl w add mul neg dy w 2 div arrw add mul sub
+       dy arrl w add mul neg dx w 2 div arrw add mul add rlineto
+       arrw dy dx neg lrl
+       len w sub arrl sub neg dx dy lrl
+       closepath fill } bind def
+/cshow { 2 index 2 index moveto dup stringwidth pop
+         neg 2 div fosi .35 mul neg rmoveto show pop pop} def
+
+gsave
+10 dup scale
+%Arcs:
+gsave
+4 94 13 46 0 0 0 0.413706 l
+70 85 80 99 1 1 0 0.413706 l
+40 93 4 94 0 0 0 0.413706 l
+13 10 3 2 1 0 1 0.413706 l
+96 93 80 99 1 1 0 0.413706 l
+64 17 68 6 1 0 0 0.413706 l
+64 17 73 1 1 0 0 0.413706 l
+45 56 50 48 0 0 1 0.413706 l
+47 10 68 6 1 0 0 0.413706 l
+9 18 19 13 1 0 1 0.413706 l
+94 0 83 12 1 0 0 0.413706 l
+94 0 73 1 1 0 0 0.413706 l
+94 34 83 12 1 0 0 0.413706 l
+24 33 13 46 0 0 0 0.413706 l
+99 93 84 93 1 1 0 0.413706 l
+99 93 96 93 1 1 0 0.413706 l
+9 12 13 10 1 0 1 0.413706 l
+9 12 9 18 1 0 1 0.413706 l
+38 50 84 93 1 1 0 0.413706 l
+38 50 3 2 1 0 1 0.413706 l
+38 50 70 85 1 1 0 0.413706 l
+38 50 40 93 0 0 0 0.413706 l
+38 50 50 48 0 0 1 0.413706 l
+38 50 45 56 0 0 1 0.413706 l
+38 50 19 13 1 0 1 0.413706 l
+38 50 47 10 1 0 0 0.413706 l
+38 50 94 34 1 0 0 0.413706 l
+38 50 24 33 0 0 0 0.413706 l
+38 50 23 11 0 1 0 0.413706 l
+grestore
+%Nodes:
+gsave
+13 46 1.37902 0 0 0 nc
+80 99 1.37902 0 0 0 nc
+4 94 1.37902 0 0 0 nc
+68 6 1.37902 0 0 0 nc
+83 12 1.37902 0 0 0 nc
+84 93 1.37902 0 0 0 nc
+3 2 1.37902 0 0 0 nc
+70 85 1.37902 0 0 0 nc
+40 93 1.37902 0 0 0 nc
+13 10 1.37902 0 0 0 nc
+96 93 1.37902 0 0 0 nc
+73 1 1.37902 0 0 0 nc
+50 48 1.37902 0 0 0 nc
+64 17 1.37902 0 0 0 nc
+45 56 1.37902 0 0 0 nc
+19 13 1.37902 0 0 0 nc
+47 10 1.37902 0 0 0 nc
+9 18 1.37902 0 0 0 nc
+94 0 1.37902 0 0 0 nc
+94 34 1.37902 0 0 0 nc
+24 33 1.37902 0 0 0 nc
+99 93 1.37902 0 0 0 nc
+23 11 1.37902 0 0 0 nc
+9 12 1.37902 0 0 0 nc
+38 50 1.37902 1 0 0 nc
+grestore
+grestore
+showpage

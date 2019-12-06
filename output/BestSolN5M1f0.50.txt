@@ -1,0 +1,4 @@
+Nenhuma solucao viavel encontrada
+Custo total: 1.79769e+308
+Tempo de processamento: 0.073568
+
