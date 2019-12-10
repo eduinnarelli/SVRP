@@ -251,7 +251,7 @@ void Graph::drawGraph(string graphName) {
 
   }
 
-  /* Destacar deposito */
+  // Destacar deposito
   colors[nodes[0]] = 1;
   shapes[nodes[0]] = 1;
 

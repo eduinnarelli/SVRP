@@ -1,8 +1,4 @@
-#include <cmath>
-#include <algorithm>
-#include <numeric>
-#include <time.h>
-#include "TabuSearchSVRP.h"
+#include "SVRP.h"
 
 // Fluxo de execução da busca tabu
 svrpSol TabuSearchSVRP::run(Graph inst, int numVehicles, int capacity) {

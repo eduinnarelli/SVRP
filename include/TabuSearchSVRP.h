@@ -1,3 +1,5 @@
+#include "graph.h"
+
 #define MAX_ITERATIONS 10000
 
 /*
