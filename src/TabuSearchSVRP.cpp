@@ -53,24 +53,12 @@ svrpSol TabuSearchSVRP::run(Graph inst, int numVehicles, int capacity) {
 						if(verbosity == 'y')
 							cout << "Nenhuma solucao viavel encontrada" << endl;
 
-						this->sol.routes.clear();
-						this->numRoutes = 0;
-
-					  // Rotas de ida e volta ao depósito
-					  for (int j = 1; j < this->g.numberVertices; j++) {
-
-					    vector<int> route(1, j);
-					    this->sol.routes.push_back(route);
-					    this->routeOfClient[j] = j-1;
-							this->numRoutes++;
-
-					  }
-						this->sol.expectedCost = penalizedExpectedLength(this->sol.routes);
 					}
 
-				} else {
-					break;
 				}
+
+				else
+					break;
 
 			}
 
