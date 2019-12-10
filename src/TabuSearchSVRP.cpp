@@ -90,7 +90,6 @@ void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
 
   int h = min(this->g.numberVertices - 1, 10);
 
-	srand(time(0));
 	this->closestNeighbours.clear();
 
   // Computar os h vizinhos mais próximos de cada vértice
@@ -182,8 +181,6 @@ void TabuSearchSVRP::neighbourhoodSearch() {
 
   this->itCount++;
   this->currNoImprovement++;
-
-	srand(time(0));
 
 	vector<int> customers;
 	for(int i = 0; i < this->g.numberVertices - 1; i++) {
@@ -599,7 +596,6 @@ void TabuSearchSVRP::update() {
 
 		}
 
-		srand(time(0));
 		routeOfClient[moveDone.client] = routeOfClient[moveDone.neighbour];
 		if(this->g.numberVertices > 5) {
 			this->moveDone.tabuDuration = this->itCount + (this->g.numberVertices - 5) + (rand() % 6);
