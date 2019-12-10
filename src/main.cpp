@@ -17,13 +17,13 @@ int main(int argc, const char **argv) {
   Graph graph;
   double fillingCoeff;
 	int capacity, numberVertices, numberVehicles;
-  char saveFile;
+  char saveFile, saveEps;
   ifstream instanceFile;
   stringstream input;
   string line;
 
-  srand(time(0)); // Semente para os movimentos do TabuSearchSVRP
-
+  srand(time(0));
+  
   if(argc == 2) {
     instanceFile.open(argv[1], std::ios::in | std::ios::binary);
 
@@ -76,6 +76,11 @@ int main(int argc, const char **argv) {
       cin >> saveFile;
     } while(saveFile != 'y' && saveFile != 'n');
 
+    do {
+      cout << "Visualize best solution in eps file? (y/n): ";
+      cin >> saveEps;
+    } while(saveEps != 'y' && saveEps != 'n');
+
   }
 
 	/* Capacidade regulada de acordo com os dados do problema */
@@ -100,17 +105,25 @@ int main(int argc, const char **argv) {
 
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
+  string nameOutputFile = "output/";
+  nameOutputFile += "BestSolN" + to_string(numberVertices)
+                  + "M" + to_string(numberVehicles)
+                  + "f" + to_string(fillingCoeff).substr(0,4);
+
   if(saveFile == 'y') {
+
+    string txtNameOutputFile = nameOutputFile + ".txt";
+
     ofstream outputFile;
-    string nameOutputFile = "output\\";
 
-    nameOutputFile += "BestSolN" + to_string(numberVertices)
-                    + "M" + to_string(numberVehicles)
-                    + "f" + to_string(fillingCoeff).substr(0,4) + ".txt";
+    /* Criar diretorio, se não criado
+    int status;
+    status = system("mkdir -p output");
+    if (status == -1)
+      cerr << "Erro ao criar diretorio" << endl;
+    */
 
-    mkdir("output");
-
-    outputFile.open(nameOutputFile, std::ios::app);
+    outputFile.open(txtNameOutputFile, std::ios::app);
 
     if (outputFile.is_open())  {
 
@@ -132,6 +145,7 @@ int main(int argc, const char **argv) {
       outputFile << "Tempo de processamento: " << elapsed_secs << endl << endl;
 
       outputFile.close();
+
     }
 
     else cout << "Unable to open file";
@@ -150,10 +164,20 @@ int main(int argc, const char **argv) {
         }
         cout << endl;
       }
+
     }
 
     cout << "Custo total: " << bestSol.expectedCost << endl;
     cout << "Tempo de processamento: " << elapsed_secs << endl << endl;
+
+  }
+
+  if(saveEps == 'y') {
+
+    nameOutputFile += ".eps";
+
+    if(bestSol.routes.size() != 0)
+      drawRoutes(graph, bestSol, nameOutputFile);
 
   }
 
