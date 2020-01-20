@@ -270,6 +270,7 @@ void Graph::drawGraph(string graphName) {
   }
 
   cout << "Create " << graphName << endl;
+
   graphToEps(g, graphName).
     coords(coords).
     title("Figura do grafo").
@@ -277,6 +278,5 @@ void Graph::drawGraph(string graphName) {
     nodeColors(composeMap(palette,colors)).
     edgeColors(composeMap(palette,ecolors)).
     run();
-
 
 }
