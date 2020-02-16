@@ -1,17 +1,21 @@
 #include "LShapedSVRP.h"
 
+// Exemplo TSP:
 // https://www.gurobi.com/documentation/9.0/examples/tsp_cpp_cpp.html#subsubsection:tsp_c++.cpp
 
-void solveSVRP(Graph g, int m) {
+void solveSVRP(Graph g, int m, int Q) {
 
     GRBEnv *env = NULL;
-    GRBVar **vars = NULL;
+    GRBVar **x = NULL;
+    GRBVar *u = NULL;
 
     int n = g.numberVertices;
 
-    vars = new GRBVar*[n];
+    x = new GRBVar*[n];
     for (int i = 0; i < n; i++)
-        vars[i] = new GRBVar[n];
+        x[i] = new GRBVar[n];
+
+    u = new GRBVar[n];
 
     try {
 
@@ -19,8 +23,16 @@ void solveSVRP(Graph g, int m) {
         env = new GRBEnv();
         GRBModel model = GRBModel(*env);
 
-        // Criar variáveis binárias x[i][j] para cada aresta (i,j)
+        /* Indicar que restrições do modelo serão 
+         * adicionadas via callback */
+        model.set(GRB_IntParam_LazyConstraints, 1);
+
+        /* Criar variáveis binárias x[i][j] para cada aresta (i,j) e contínuas
+         * u[i] para cada vértice i */
         for (int i = 0; i < n; i++) {
+
+            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "u_"+to_string(i));
+
             for (int j = 0; j <= i; j++) {
 
                 /* Arestas (0,j) incidentes ao depósito podem ser paralelas,
@@ -30,10 +42,9 @@ void solveSVRP(Graph g, int m) {
                 
                 if (i != j) {
 
-                    /* Cada variável recebe um custo associado
-                    * que corresponde à distância entre os pontos
-                    * i e j. */
-                    vars[i][j] = model.addVar(
+                    /* Cada variável recebe um custo associado que corresponde à distância 
+                     * entre os pontos i e j. */
+                    x[i][j] = model.addVar(
                         0.0, var_bound, 
                         g.adjMatrix[i][j],
                         GRB_INTEGER, 
@@ -43,43 +54,50 @@ void solveSVRP(Graph g, int m) {
                 }
 
                 // Grafo é não-direcionado
-                vars[j][i] = vars[i][j];
+                x[j][i] = x[i][j];
 
             }
         }
 
-        /* Restrição sum(x[0][j]) = 2*m 
-         * - as m rotas devem começar e terminar no depósito. */
-
         GRBLinExpr expr = 0;
         for (int j = 1; j < n; j++)
-            expr += vars[0][j];
+            expr += x[0][j];
 
+        /* Restrição sum(x[0][j]) = 2*m 
+         * - as m rotas devem começar e terminar no depósito. */
         model.addConstr(expr == 2*m, "m_routes");
-
-        /* Restrição sum(x[i][j]) = 2 para todo i > 0 fixo:
-         * - cada cliente faz parte de uma rota com duas arestas
-         *   incidindo sobre ele. */
 
         for (int i = 1; i < n; i++) {
 
             GRBLinExpr expr = 0;
             for (int j = 0; j < n; j++)
-                expr += vars[i][j];
+                expr += x[i][j];
 
+            /* Restrição sum(x[i][j]) = 2 para todo i > 0 fixo:
+            * - cada cliente faz parte de uma rota com duas arestas incidindo sobre ele. */
             model.addConstr(expr == 2, "degr2_" + to_string(i));
 
+            for (int j = 1; j < n; j++) {
+
+                /* Restrição u[i] + q[j] = u[j] se x[i][j] = 1 para todo i != 0, j != 0:
+                * - eliminação de subciclos (MTZ); q[j] é a demanda média do cliente j. */
+                model.addGenConstrIndicator(
+                    x[i][j], true, // indicator x[i][j] == 1
+                    u[i] + g.expectedDemand[i] == u[j],
+                    "subtourelim_" + to_string(i) + "_" + to_string(j)
+                );
+
+            }
+
+            /* Restrição u[i] >= q[i] para todo cliente:
+             * - a demanda de i deve ser atendida. */
+            model.addConstr(u[i] >= g.expectedDemand[i], "met_demand_" + to_string(i));
+
+            /* Restrição u[i] <= Q para todo cliente:
+             * - a capacidade do veículo não pode ser ultrapassada. */
+            model.addConstr(u[i] <= Q, "capacity_" + to_string(i));
+
         }
-
-
-
-
-
-        
-
-
-
-
 
     } catch (GRBException e) {
         cout << "Error number: " << e.getErrorCode << endl;
