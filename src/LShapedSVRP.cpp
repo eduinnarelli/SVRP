@@ -33,25 +33,21 @@ void solveSVRP(Graph g, int m, int Q) {
 
             u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "u_"+to_string(i));
 
-            for (int j = 0; j <= i; j++) {
+            for (int j = 0; j < i; j++) {
 
                 /* Arestas (0,j) incidentes ao depósito podem ser paralelas,
                  * caso em que x[0][j] é 2 na solução. As restantes são 
                  * binárias. */
                 double var_bound = (i == 0) ? 2.0 : 1.0;
                 
-                if (i != j) {
-
-                    /* Cada variável recebe um custo associado que corresponde à distância 
-                     * entre os pontos i e j. */
-                    x[i][j] = model.addVar(
-                        0.0, var_bound, 
-                        g.adjMatrix[i][j],
-                        GRB_INTEGER, 
-                        "x_"+to_string(i)+"_"+to_string(j)
-                    );
-
-                }
+                /* Cada variável recebe um custo associado que corresponde à distância 
+                 * entre os pontos i e j. */
+                x[i][j] = model.addVar(
+                    0.0, var_bound, 
+                    g.adjMatrix[i][j],
+                    GRB_INTEGER, 
+                    "x_"+to_string(i)+"_"+to_string(j)
+                );
 
                 // Grafo é não-direcionado
                 x[j][i] = x[i][j];
@@ -105,6 +101,5 @@ void solveSVRP(Graph g, int m, int Q) {
     } catch (...) {
         cout << "Error during optimization." << endl;
     }
-
 
 }
