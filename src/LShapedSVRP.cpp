@@ -83,7 +83,7 @@ void solveSVRP(Graph g, int m, int Q) {
                 * - eliminação de subciclos (MTZ); q[j] é a demanda média do cliente j. */
                 model.addGenConstrIndicator(
                     x[i][j], true, // indicator x[i][j] == 1
-                    u[i] + g.expectedDemand[i] == u[j],
+                    u[i] + g.expectedDemand[j] == u[j],
                     "subtourelim_" + to_string(i) + "_" + to_string(j)
                 );
 
