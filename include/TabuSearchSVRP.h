@@ -102,7 +102,6 @@ class TabuSearchSVRP {
     vector<routeMove> tabuMoves;
     svrpSol sol, bestFeasibleSol;
 
-
 public:
 
     svrpSol run(Graph inst, int numVehicles, int capacity);

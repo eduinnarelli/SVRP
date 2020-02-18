@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iostream>
 #include <stdio.h>
-//#include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "SVRP.h"
@@ -115,13 +114,6 @@ int main(int argc, const char **argv) {
     string txtNameOutputFile = nameOutputFile + ".txt";
 
     ofstream outputFile;
-
-    /* Criar diretorio, se não criado
-    int status;
-    status = system("mkdir -p output");
-    if (status == -1)
-      cerr << "Erro ao criar diretorio" << endl;
-    */
 
     outputFile.open(txtNameOutputFile, std::ios::app);
 

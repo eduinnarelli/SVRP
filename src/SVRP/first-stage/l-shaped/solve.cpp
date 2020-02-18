@@ -3,6 +3,16 @@
 // Exemplo TSP:
 // https://www.gurobi.com/documentation/9.0/examples/tsp_cpp_cpp.html#subsubsection:tsp_c++.cpp
 
+// Dps da pra colocar essa função no utils + geral
+double lowerBound(Graph g, int n, int m) {
+
+    // Ordernar distâncias do depósito aos clientes em ordem crescente
+    vector<double> depotDistances = g.adjMatrix[0];
+    sort(depotDistances.begin(), depotDistances.end());
+    // ...
+
+}
+
 void solveSVRP(Graph g, int m, int Q) {
 
     GRBEnv *env = NULL;
