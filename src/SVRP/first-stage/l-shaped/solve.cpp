@@ -1,17 +1,74 @@
 #include "LShapedSVRP.h"
 
-// Exemplo TSP:
-// https://www.gurobi.com/documentation/9.0/examples/tsp_cpp_cpp.html#subsubsection:tsp_c++.cpp
+/*********************** Cortes de optimalidade *********************** 
+ * Quando uma solução viável inteira é encontrada para a relaxação do
+ * problema, checamos se seu valor é estritamente menor que o custo 
+ * esperado da rota. Em caso positivo, essa solução é inviável para o 
+ * problema original e impomos um corte de optimalidade que a elimina. */
+class optimalityCut : public GRBCallback
+{
+    public:
+        GRBVar **xvars;
+        int n, Q;
+        double L;
+        Graph g;
 
-// Dps da pra colocar essa função no utils + geral
-double lowerBound(Graph g, int n, int m) {
+        optimalityCut(GRBVar** xvars, double lowerBound, Graph graph, int capacity) {
+            xvars = xvars;
+            L = lowerBound;
+            g = graph;
+            Q = capacity;
+        }
 
-    // Ordernar distâncias do depósito aos clientes em ordem crescente
-    vector<double> depotDistances = g.adjMatrix[0];
-    sort(depotDistances.begin(), depotDistances.end());
-    // ...
+    protected:
+        void callback() {
+            try {
+                if (where == GRB_CB_MIPSOL) {
+                    /* Solução viável inteira encontrada. Armazenar solução
+                    em um double (gurobi pode retornar 0.999 ao invés de 1,
+                    por exemplo) */
+                    double **xsol = new double*[n];
+                    for (int i = 0; i < n; i++)
+                        xsol[i] = getSolution(xvars[i], n);
 
-}
+                    // Armazenar custo esperado do segundo estágio
+                    vector<vector<int>> routes = buildRoutesFromSol(xsol, n);
+                    double expectedCost = Bertsimas2ndStage::totalExpectedLength(g, Q, routes);
+
+                    // Armazenar valor da solução encontrada
+                    double objValue = getDoubleInfo(GRB_CB_MIPSOL_OBJ);
+
+                    // Verificar se viola objValue >= expectedCost
+                    if (objValue < expectedCost) {
+
+                        GRBLinExpr expr = 0;
+                        int rhs = 0;
+
+                        /* Corte de optimalidade 
+                         * sum(x[i][j], xsol[i][j] = 1) <= sum(xsol[i][j]) - 1 */
+                        for (int i = 0; i < n; i++) {
+                            for (int j = i+1; j < n; j++) {
+                                if (xsol[i][j] > 0.5) {
+                                    expr += xvars[i][j];
+                                    rhs += 1;
+                                }
+                            }
+                        }
+
+                        addLazy(expr <= rhs - 1);
+
+                    } 
+                }
+            } catch (GRBException e) {
+                cout << "Error number: " << e.getErrorCode() << endl;
+                cout << e.getMessage() << endl;
+            } catch (...) {
+                cout << "Error during callback" << endl;
+            }
+
+        }
+
+};
 
 void solveSVRP(Graph g, int m, int Q) {
 
@@ -33,8 +90,7 @@ void solveSVRP(Graph g, int m, int Q) {
         env = new GRBEnv();
         GRBModel model = GRBModel(*env);
 
-        /* Indicar que restrições do modelo serão 
-         * adicionadas via callback */
+        // Indicar que restrições do modelo serão adicionadas via callback
         model.set(GRB_IntParam_LazyConstraints, 1);
 
         /* Criar variáveis binárias x[i][j] para cada aresta (i,j) e contínuas
@@ -104,6 +160,13 @@ void solveSVRP(Graph g, int m, int Q) {
             model.addConstr(u[i] <= Q, "capacity_" + to_string(i));
 
         }
+
+        // Definir callback
+        optimalityCut cb = optimalityCut(x, 0, g, Q);
+        model.setCallback(&cb);
+
+        // Otimizar modelo
+        model.optimize();
 
     } catch (GRBException e) {
         cout << "Error number: " << e.getErrorCode << endl;
