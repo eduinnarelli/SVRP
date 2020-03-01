@@ -2,28 +2,36 @@
 # CONFIGURAÇÕES BÁSICAS (objetos, flags, etc.)
 ######################################################################################################################################
 
-OBJ_DIR = obj
-SRC_DIR = src
+# Variáveis
+SRC_DIR := src
+BUILD_DIR := build
+TARGET := bin/svrp
+GRB_PATH := /home/eduinnarelli/opt/gurobi900 # pasta em que gurobi se encontra
+INCLUDES := -I include -I $(join ${GRB_PATH}, /linux64/include)
+LIBS := -L $(join ${GRB_PATH}, /linux64/lib) -l gurobi_c++ -l gurobi90
 
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/SVRP.o $(OBJ_DIR)/TabuSearchSVRP.o $(OBJ_DIR)/graph.o
+# Armazenar todos arquivos .cpp e relacionar com objetos .o
+SOURCES :=  $(shell find $(SRC_DIR) -type f -name *.cpp)
+OBJECTS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.cpp=.o))
 
-BINARY_NAME = svrp
-LINKING_FLAGS = -O3 -std=c++11 -lemon
-COMPILATION_FLAGS = -c -O3 -std=c++11 -Iinclude
+# Flags
+LINKING_FLAGS := -O3 -std=c++11 -lemon $(INCLUDES) $(LIBS)
+COMPILATION_FLAGS := -g -Wall -O3 -std=c++11 
 
 ######################################################################################################################################
 # COMPILAÇÃO
 ######################################################################################################################################
 
-all: create_obj_dir $(OBJS)
-		g++ $(OBJS) -o $(BINARY_NAME) $(LINKING_FLAGS)
+$(TARGET): $(OBJECTS)
+		@echo "Linking..."
+		@echo "g++ $^ -o $(TARGET) $(LINKING_FLAGS)"; g++ $^ -o $(TARGET) $(LINKING_FLAGS)
 
-create_obj_dir:
-		mkdir -p $(OBJ_DIR)
-
-$(OBJS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
-		g++ -c $< -o $@ $(COMPILATION_FLAGS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+		@mkdir -p $(dir $@)
+		@echo "g++ $(COMPILATION_FLAGS) -c -o $@ $<"; g++ $(COMPILATION_FLAGS) -c -o $@ $<
 
 ######################################################################################################################################
+
 clean:
-		rm -rf $(OBJ_DIR) $(BINARY_NAME)
+		@echo "Cleaning..."
+		@echo "rm -rf $(BUILD_DIR) $(TARGET)"; rm -rf $(BUILD_DIR) $(TARGET)
