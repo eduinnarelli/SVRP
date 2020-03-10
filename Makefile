@@ -10,13 +10,13 @@ GRB_PATH := /home/eduinnarelli/opt/gurobi900 # pasta em que gurobi se encontra
 INCLUDES := -I include -I $(join ${GRB_PATH}, /linux64/include)
 LIBS := -L $(join ${GRB_PATH}, /linux64/lib) -l gurobi_c++ -l gurobi90
 
-# Armazenar todos arquivos .cpp e relacionar com objetos .o
+# Listar todos arquivos .cpp e relacionar com objetos .o
 SOURCES :=  $(shell find $(SRC_DIR) -type f -name *.cpp)
 OBJECTS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.cpp=.o))
 
 # Flags
-LINKING_FLAGS := -O3 -std=c++11 -lemon $(INCLUDES) $(LIBS)
-COMPILATION_FLAGS := -g -Wall -O3 -std=c++11 
+LINKING_FLAGS := -O3 -std=c++11 -lemon $(LIBS)
+COMPILATION_FLAGS := -g -Wall -O3 -std=c++11 $(INCLUDES) 
 
 ######################################################################################################################################
 # COMPILAÇÃO
@@ -24,7 +24,7 @@ COMPILATION_FLAGS := -g -Wall -O3 -std=c++11
 
 $(TARGET): $(OBJECTS)
 		@echo "Linking..."
-		@echo "g++ $^ -o $(TARGET) $(LINKING_FLAGS)"; g++ $^ -o $(TARGET) $(LINKING_FLAGS)
+		@echo "g++ $^ -o $(TARGET) $(LINKING_FLAGS)"; g++  $^ -o $(TARGET) $(LINKING_FLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 		@mkdir -p $(dir $@)
