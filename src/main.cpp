@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "SVRP.h"
+#include "LShapedSVRP.h"
 
 char verbosity;
 
@@ -94,11 +94,12 @@ int main(int argc, const char **argv) {
   if(verbosity == 'y')
   	graph.printInstance();
 
-	TabuSearchSVRP ts;
+	// TabuSearchSVRP ts;
 
   clock_t begin = clock();
 
-	svrpSol bestSol = ts.run(graph, numberVehicles, capacity);
+	// svrpSol bestSol = ts.run(graph, numberVehicles, capacity);
+  // solveSVRP(graph, numberVehicles, capacity);
 
   clock_t end = clock();
 
@@ -109,69 +110,69 @@ int main(int argc, const char **argv) {
                   + "M" + to_string(numberVehicles)
                   + "f" + to_string(fillingCoeff).substr(0,4);
 
-  if(saveFile == 'y') {
+  // if (saveFile == 'y') {
 
-    string txtNameOutputFile = nameOutputFile + ".txt";
+  //   string txtNameOutputFile = nameOutputFile + ".txt";
 
-    ofstream outputFile;
+  //   ofstream outputFile;
 
-    outputFile.open(txtNameOutputFile, std::ios::app);
+  //   outputFile.open(txtNameOutputFile, std::ios::app);
 
-    if (outputFile.is_open())  {
+  //   if (outputFile.is_open())  {
 
-      if(bestSol.routes.size() == 0)
-          outputFile << "Nenhuma solucao viavel encontrada" <<  endl;
+  //     if(bestSol.routes.size() == 0)
+  //         outputFile << "Nenhuma solucao viavel encontrada" <<  endl;
 
-      else {
+  //     else {
 
-        for(int i = 0; i < bestSol.routes.size(); i++) {
-      		outputFile << "Rota " << i << ": ";
-      		for(int j = 0; j < bestSol.routes[i].size(); j++) {
-      			outputFile << bestSol.routes[i][j] << " ";
-      		}
-      		outputFile << endl;
-      	}
-      }
+  //       for(int i = 0; i < bestSol.routes.size(); i++) {
+  //     		outputFile << "Rota " << i << ": ";
+  //     		for(int j = 0; j < bestSol.routes[i].size(); j++) {
+  //     			outputFile << bestSol.routes[i][j] << " ";
+  //     		}
+  //     		outputFile << endl;
+  //     	}
+  //     }
 
-      outputFile << "Custo total: " << bestSol.expectedCost << endl;
-      outputFile << "Tempo de processamento: " << elapsed_secs << endl << endl;
+  //     outputFile << "Custo total: " << bestSol.expectedCost << endl;
+  //     outputFile << "Tempo de processamento: " << elapsed_secs << endl << endl;
 
-      outputFile.close();
+  //     outputFile.close();
 
-    }
+  //   }
 
-    else cout << "Unable to open file";
-  }
+  //   else cout << "Unable to open file";
+  // }
 
-  else {
+  // else {
 
-    if(bestSol.routes.size() == 0)
-        cout << "Nenhuma solucao viavel encontrada" <<  endl;
+  //   if (bestSol.routes.size() == 0)
+  //       cout << "Nenhuma solucao viavel encontrada" <<  endl;
 
-    else {
-      for(int i = 0; i < bestSol.routes.size(); i++) {
-        cout << "Rota " << i << ": ";
-        for(int j = 0; j < bestSol.routes[i].size(); j++) {
-          cout << bestSol.routes[i][j] << " ";
-        }
-        cout << endl;
-      }
+  //   else {
+  //     for(int i = 0; i < bestSol.routes.size(); i++) {
+  //       cout << "Rota " << i << ": ";
+  //       for(int j = 0; j < bestSol.routes[i].size(); j++) {
+  //         cout << bestSol.routes[i][j] << " ";
+  //       }
+  //       cout << endl;
+  //     }
 
-    }
+  //   }
 
-    cout << "Custo total: " << bestSol.expectedCost << endl;
-    cout << "Tempo de processamento: " << elapsed_secs << endl << endl;
+  //   cout << "Custo total: " << bestSol.expectedCost << endl;
+  //   cout << "Tempo de processamento: " << elapsed_secs << endl << endl;
 
-  }
+  // }
 
-  if(saveEps == 'y') {
+  // if (saveEps == 'y') {
 
-    nameOutputFile += ".eps";
+  //   nameOutputFile += ".eps";
 
-    if(bestSol.routes.size() != 0)
-      drawRoutes(graph, bestSol, nameOutputFile);
+  //   if(bestSol.routes.size() != 0)
+  //     drawRoutes(graph, bestSol, nameOutputFile);
 
-  }
+  // }
 
   return 0;
 

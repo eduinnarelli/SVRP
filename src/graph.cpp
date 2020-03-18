@@ -126,6 +126,7 @@ utilizando suas coordenadas.
 void Graph::computeDistances() {
 
     double x1, x2, y1, y2, dist;
+    int e = 0;
 
     for (int i = 0; i < this->numberVertices; i++) {
         for (int j = 0; j < i; j++) {
@@ -140,6 +141,9 @@ void Graph::computeDistances() {
             dist = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
             this->adjMatrix[i][j] = dist;
             this->adjMatrix[j][i] = dist;
+
+            // Salvar arestas (útil para solução exata)
+            this->edges.push_back({i, j, dist});
 
         }
     }

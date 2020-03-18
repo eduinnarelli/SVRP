@@ -32,6 +32,7 @@ public:
     double totalExpectedDemand;
     vector<double> expectedDemand;
     vector<vertex> vertices;
+    vector<edge> edges;
     vector<vector<double>> adjMatrix;
 
     void createInstance(int n);

@@ -1,95 +1,110 @@
 #include "LShapedSVRP.h"
 
-void solveSVRP(Graph g, int m, int Q) {
+/* Método que resolve o SVRP de forma exata, usando o algoritmo L-Shaped Inteiro
+ * inicialmente proposto por Laporte & Louveaux. O objetivo no primeiro estágio é
+ * projetar m rotas (uma para cada veículo) de custo esperado mínimo saindo e 
+ * voltando para o depósito, tal que cada cliente esteja em exatamente uma rota e 
+ * a demanda esperada de cada rota seja no máximo Q. */
+void solveSVRP(Graph g, int m, int Q, int L) {
 
     GRBEnv *env = NULL;
-    GRBVar **x = NULL;
-    GRBVar *u = NULL;
+    GRBVar *x = NULL;
+    GRBVar *objLowerBound = NULL;
 
+    // n é o número de clientes + o depósito
     int n = g.numberVertices;
 
-    x = new GRBVar*[n];
-    for (int i = 0; i < n; i++)
-        x[i] = new GRBVar[n];
+    /* Variável x[e] para cada uma das n*(n-1)/2 arestas e={u,v} do grafo completo 
+     * não direcionado */
+    x = new GRBVar[n*(n-1)/2];
 
-    u = new GRBVar[n];
+    // Limite inferior que substitui o custo esperado na função objetivo
+    objLowerBound = new GRBVar[1];
 
     try {
 
         // Inicializar ambiente e modelo
         env = new GRBEnv();
-        GRBModel model = GRBModel(*env);
+        GRBModel svrp = GRBModel(*env);
 
-        /* Criar variáveis binárias x[i][j] para cada aresta (i,j) e contínuas
-         * u[i] para cada vértice i */
-        for (int i = 0; i < n; i++) {
+        /* Conhecido um limite inferior do custo esperado, sabe-se que a solução
+         * ótima não pode ser menor que este */
+        objLowerBound[0] = svrp.addVar(
+            L, GRB_INFINITY, 
+            /* A função objetivo na relaxação do problema consiste em minimizar 
+             * esse lower da função objetivo original */
+            1.0, GRB_CONTINUOUS, "objLowerBound"
+        );
 
-            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "u_"+to_string(i));
+        for (int e = 0; e < n*(n-1)/2 ; e++) {
 
-            for (int j = 0; j < i; j++) {
+            // Salvar vértices da aresta
+            int u = g.edges[e].u, v = g.edges[e].v;
 
-                /* Arestas (0,j) incidentes ao depósito podem ser paralelas,
-                 * caso em que x[0][j] é 2 na solução. As restantes são 
-                 * binárias. */
-                double var_bound = (i == 0) ? 2.0 : 1.0;
-                
-                /* Cada variável recebe um custo associado que corresponde à distância 
-                 * entre os pontos i e j. */
-                x[i][j] = model.addVar(
-                    0.0, var_bound, 
-                    g.adjMatrix[i][j],
-                    GRB_INTEGER, 
-                    "x_"+to_string(i)+"_"+to_string(j)
-                );
+            /* x é uma variável inteira que representa o número de vezes que a aresta
+             * (u,v) aparece na solução. Geralmente x assume 0 ou 1. Arestas incidentes 
+             * ao depósito podem ser paralelas, quando uma rota consiste em visitar um 
+             * vértice e imediatamente voltar. Nesse caso, x é 2. */
+            double upper_bound = (u == 0 || v == 0) ? 2.0 : 1.0;
 
-                // Grafo é não-direcionado
-                x[j][i] = x[i][j];
+            x[e] = svrp.addVar(
+                // Intervalo de inteiros que a variável pode assumir
+                0.0, upper_bound,
+                // As variáveis x não constam na função objetivo
+                0.0,
+                // As variáveis são inteiras
+                GRB_INTEGER,
+                // Nome x[e={u,v}] da variável
+                "x[" + to_string(e) + "={" + to_string(u) + "," + to_string(v) + "}]"
+            );
+        }
 
+        /* Restrição 1: 
+         * as m rotas devem começar e terminar no depósito (vértice 0);
+         * ou seja, as arestas devem incidir no depósito 2*m vezes */
+
+        GRBLinExpr lhs = 0;
+        for (int e = 0; e < n*(n-1)/2; e++) {
+
+            // Salvar vértices da aresta
+            int u = g.edges[e].u, v = g.edges[e].v;
+
+            // Arestas incidentes ao depósito
+            if (u == 0 || v == 0) {
+                lhs += x[e];
             }
         }
 
-        GRBLinExpr expr = 0;
-        for (int j = 1; j < n; j++)
-            expr += x[0][j];
-
-        /* Restrição sum(x[0][j]) = 2*m 
-         * - as m rotas devem começar e terminar no depósito. */
-        model.addConstr(expr == 2*m, "m_routes");
+        svrp.addConstr(lhs == 2*m, "m_routes");
 
         for (int i = 1; i < n; i++) {
 
-            GRBLinExpr expr = 0;
-            for (int j = 0; j < n; j++)
-                expr += x[i][j];
+            /* Restrição 2:
+             * cada cliente i faz parte de uma rota com duas arestas incidindo nele. */
 
-            /* Restrição sum(x[i][j]) = 2 para todo i > 0 fixo:
-            * - cada cliente faz parte de uma rota com duas arestas incidindo sobre ele. */
-            model.addConstr(expr == 2, "degr2_" + to_string(i));
+            GRBLinExpr lhs = 0;
+            for (int e = 0; e < n*(n-1)/2; e++) {
 
-            for (int j = 1; j < n; j++) {
+                // Salvar vértices da aresta
+                int u = g.edges[e].u, v = g.edges[e].v;
 
-                /* Restrição u[i] + q[j] = u[j] se x[i][j] = 1 para todo i != 0, j != 0:
-                * - eliminação de subciclos (MTZ); q[j] é a demanda média do cliente j. */
-                model.addGenConstrIndicator(
-                    x[i][j], true, // indicator x[i][j] == 1
-                    u[i] + g.expectedDemand[j] == u[j],
-                    "subtourelim_" + to_string(i) + "_" + to_string(j)
-                );
+                // Arestas incidentes à i
+                if (u == i || v == i) {
+                    lhs += x[e];
+                }
 
             }
 
-            /* Restrição u[i] >= q[i] para todo cliente:
-             * - a demanda de i deve ser atendida. */
-            model.addConstr(u[i] >= g.expectedDemand[i], "met_demand_" + to_string(i));
-
-            /* Restrição u[i] <= Q para todo cliente:
-             * - a capacidade do veículo não pode ser ultrapassada. */
-            model.addConstr(u[i] <= Q, "capacity_" + to_string(i));
+            svrp.addConstr(lhs == 2, "degr2_" + to_string(i));
 
         }
+        
+        // Primeiro gera subtour nas callbacks, dps optimal cut!!
 
-        // Otimizar modelo
-        model.optimize();
+
+
+
+
 
     } catch (GRBException e) {
         cout << "Error number: " << e.getErrorCode() << endl;
