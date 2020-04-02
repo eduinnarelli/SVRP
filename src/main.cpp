@@ -99,7 +99,7 @@ int main(int argc, const char **argv) {
   clock_t begin = clock();
 
 	// svrpSol bestSol = ts.run(graph, numberVehicles, capacity);
-  // solveSVRP(graph, numberVehicles, capacity);
+  solveSVRP(graph, numberVehicles, capacity, 0);
 
   clock_t end = clock();
 
