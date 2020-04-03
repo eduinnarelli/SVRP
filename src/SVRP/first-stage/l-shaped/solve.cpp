@@ -4,8 +4,8 @@
 
 /* Subclasse da classe abstrata GRBCallback. Um objeto da mesma é criado antes da otimização
  * ser ativada, de forma que a implementação do método callback() é chamada periodicamente
- * para adicionar cortes ou finalizar o algoritmo. */
-class CutOrFinish: public GRBCallback {
+ * para adicionar restrições violadas do modelo. */
+class DynamicCuts: public GRBCallback {
 
     public:
         GRBVar *x;      // variáveis x PLI (arestas)
@@ -15,7 +15,7 @@ class CutOrFinish: public GRBCallback {
         int Q;          // capacidade do veículo
         int m;          // número de veículos
 
-        CutOrFinish(GRBVar *xsol, GRBVar *objLowerBound, double lowerBound, 
+        DynamicCuts(GRBVar *xsol, GRBVar *objLowerBound, double lowerBound, 
                     Graph graph, int capacity, int numVehicles) {
             x = xsol;
             objLB = objLowerBound;
@@ -114,7 +114,8 @@ class CutOrFinish: public GRBCallback {
                         }
                     }
 
-                    // Verificar se a solução é ótima para o VRP determinístico corrente
+                    /* Verificar se solução é ótima ou adicionar cortes de optimalidade caso
+                     * não for, se não violar nenhuma eliminação de subciclo */
                     if (!violateSubtourConstr) {
 
                         // Armazenar custo esperado do segundo estágio
@@ -264,7 +265,7 @@ void solveSVRP(Graph g, int m, int Q, int L) {
         }
         
         // Definir a callback chamada periodicamente na otimização do modelo
-        CutOrFinish cb = CutOrFinish(x, objLowerBound, L, g, Q, m);
+        DynamicCuts cb = DynamicCuts(x, objLowerBound, L, g, Q, m);
         svrp.setCallback(&cb);
 
         // Escrever modelo inicial no arquivo svrp.lp
@@ -273,35 +274,6 @@ void solveSVRP(Graph g, int m, int Q, int L) {
         // Otimizar
         svrp.optimize();
 
-        // Extrair solução
-        if (svrp.get(GRB_IntAttr_SolCount) > 0) {
-            // Armazenar variáveis da sol. em doubles
-            double *xsol = new double[n*(n-1)/2];
-            xsol = svrp.get(GRB_DoubleAttr_X, x, n*(n-1)/2);
-
-            // Armazenar arestas na solução, tirando as arestas incidentes ao depósito
-            vector<edge> edgesInSol;
-            for (int e = 0; e < n*(n-1)/2; e++) {
-                if (xsol[e] > 0.5 && g.edges[e].u != 0 && g.edges[e].v != 0) {
-                    edgesInSol.push_back(g.edges[e]);
-                }
-            }
-
-            // Criar lista de adjacência do grafo da solução MENOS o depósito
-            vector<list<int>> adjListSol = createAdjList(edgesInSol, n);
-
-            // Armazenar componentes conexas desse grafo
-            vector<vector<int>> componentsSol = connectedComponents(adjListSol, n); 
-
-            // Imprimir solução
-            cout << "Rotas ótimas do SVRP:" << endl;
-            for (vector<int> cc : componentsSol) {
-                for (int client: cc) {
-                    cout << client << " ";
-                }
-                cout << endl;
-            }
-        }
     } catch (GRBException e) {
         cout << "Error number: " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
