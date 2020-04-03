@@ -8,13 +8,18 @@
 class CutOrFinish: public GRBCallback {
 
     public:
-        GRBVar *x;      // variáveis PLI
+        GRBVar *x;      // variáveis x PLI (arestas)
+        GRBVar *objLB;   // variável theta PLI (limite inferior ao opt.)
+        double L;       // limite inferior p/ solução
         Graph g;        // grafo de entrada
         int Q;          // capacidade do veículo
         int m;          // número de veículos
 
-        CutOrFinish(GRBVar *xsol, Graph graph, int capacity, int numVehicles) {
+        CutOrFinish(GRBVar *xsol, GRBVar *objLowerBound, double lowerBound, 
+                    Graph graph, int capacity, int numVehicles) {
             x = xsol;
+            objLB = objLowerBound;
+            L = lowerBound;
             g = graph;
             Q = capacity;
             m = numVehicles;
@@ -28,7 +33,7 @@ class CutOrFinish: public GRBCallback {
                     int n = g.numberVertices;
                     double *xdouble = new double[n*(n-1)/2];
 
-                    /* Armazenar x em um double (gurobi pode retornar 0.999 ao invés
+                    /* Armazenar variáveis x em doubles (gurobi pode retornar 0.999 ao invés
                      * de 1, por exemplo) */
                     xdouble = getSolution(x, n*(n-1)/2);
 
@@ -110,7 +115,7 @@ class CutOrFinish: public GRBCallback {
                     }
 
                     // Verificar se a solução é ótima para o VRP determinístico corrente
-                    if (violateSubtourConstr) {
+                    if (!violateSubtourConstr) {
 
                         // Armazenar custo esperado do segundo estágio
                         double expectedCost = Bertsimas2ndStage::totalExpectedLength(g, Q, componentsSol);
@@ -121,25 +126,33 @@ class CutOrFinish: public GRBCallback {
                         // Verificar se viola objValue >= expectedCost
                         if (objValue < expectedCost) {
 
-                            cout << "Viola!" << endl;
-
-                            GRBLinExpr lhs = 0;
-                            int rhs = edgesInSol.size() + 2*m - 1;
+                            GRBLinExpr lhs = objLB[0];
+                            GRBLinExpr rhs = 0;
+                            int numEdgesInSol = edgesInSol.size() + 2*m;
 
                             /* Corte de optimalidade: 
-                             * sum(x[i][j], xsol[i][j] = 1) <= sum(xsol[i][j]) - 1 */
+                             * objLB >= (expCost - L) x
+                             *          (sum[x(e) p/ e na sol] - sum[x(e) p/ e fora da sol] - 
+                             *           nº de arestas na sol + 1) + L */
                             for (int e = 0; e < n*(n-1)/2; e++) {
+                                // Acumular sum[x(e) p/ e na sol] - sum[x(e) p/ e fora da sol]
                                 if (xdouble[e] > 0.5) {
-                                    lhs += x[e];
+                                    rhs += x[e];
+                                } else {
+                                    rhs -= x[e];
                                 }
                             }
 
-                            addLazy(lhs <= rhs);
+                            // Operações restantes
+                            rhs += 1 - numEdgesInSol;
+                            rhs *= (expectedCost - L);
+                            rhs += L;
+
+                            addLazy(lhs >= rhs);
 
                         }
-                    }
+                    } 
                 }
-
             } catch (GRBException e) {
                 cout << "Error number: " << e.getErrorCode() << endl;
                 cout << e.getMessage() << endl;
@@ -251,7 +264,7 @@ void solveSVRP(Graph g, int m, int Q, int L) {
         }
         
         // Definir a callback chamada periodicamente na otimização do modelo
-        CutOrFinish cb = CutOrFinish(x, g, Q, m);
+        CutOrFinish cb = CutOrFinish(x, objLowerBound, L, g, Q, m);
         svrp.setCallback(&cb);
 
         // Escrever modelo inicial no arquivo svrp.lp
@@ -260,7 +273,35 @@ void solveSVRP(Graph g, int m, int Q, int L) {
         // Otimizar
         svrp.optimize();
 
+        // Extrair solução
+        if (svrp.get(GRB_IntAttr_SolCount) > 0) {
+            // Armazenar variáveis da sol. em doubles
+            double *xsol = new double[n*(n-1)/2];
+            xsol = svrp.get(GRB_DoubleAttr_X, x, n*(n-1)/2);
 
+            // Armazenar arestas na solução, tirando as arestas incidentes ao depósito
+            vector<edge> edgesInSol;
+            for (int e = 0; e < n*(n-1)/2; e++) {
+                if (xsol[e] > 0.5 && g.edges[e].u != 0 && g.edges[e].v != 0) {
+                    edgesInSol.push_back(g.edges[e]);
+                }
+            }
+
+            // Criar lista de adjacência do grafo da solução MENOS o depósito
+            vector<list<int>> adjListSol = createAdjList(edgesInSol, n);
+
+            // Armazenar componentes conexas desse grafo
+            vector<vector<int>> componentsSol = connectedComponents(adjListSol, n); 
+
+            // Imprimir solução
+            cout << "Rotas ótimas do SVRP:" << endl;
+            for (vector<int> cc : componentsSol) {
+                for (int client: cc) {
+                    cout << client << " ";
+                }
+                cout << endl;
+            }
+        }
     } catch (GRBException e) {
         cout << "Error number: " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;

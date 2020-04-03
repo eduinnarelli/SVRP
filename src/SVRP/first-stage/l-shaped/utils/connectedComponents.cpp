@@ -11,7 +11,7 @@ vector<vector<int>> connectedComponents(vector<list<int>> adjList, int n) {
     // Ignorar vértice 0 (depósito)
     for (int v = 1; v < n; v++) {
 
-        // Se v não foi visitado,
+        // Se v não foi visitado, é necessário construir sua componente
         if (!visited[v]) {
 
             vector<int> component;
