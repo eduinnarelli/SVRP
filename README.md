@@ -52,5 +52,5 @@ Referência:
 
  - [Estrutura dos Grafos](https://github.com/eduinnarelli/SVRP/blob/master/src/graph.cpp)
 
-# Resultados
- - [L-Shaped e Tabu](https://docs.google.com/spreadsheets/d/142UPJiPdn5aW4Priix_-M1D8ou6k1t6roDuSH1Ff3Bo/edit?usp=sharing)
+# Alguns Resultados
+ - [L-Shaped e Tabu](https://docs.google.com/spreadsheets/d/1_yRlqPKbVi1mNA_TAB1vVfs2djhf2BRnBR-tUn5ooR8/edit?usp=sharing)
