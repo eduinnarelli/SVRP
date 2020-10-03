@@ -1,4 +1,4 @@
 #include "SVRP.h"
 #include "gurobi_c++.h"
 
-void solveSVRP(Graph g, int m, int Q, int L);
+vector<vector<int> > solveSVRP(Graph g, int m, int Q, int L);

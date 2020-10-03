@@ -11,7 +11,7 @@ e [10,20].
 Entrada:
 n: número de vértices do grafo.
 */
-void Graph::createInstance(int n) {
+void Graph::createInstance(int n, int numRandomClients) {
 
     int range;
     vertex newVertex;
@@ -25,7 +25,7 @@ void Graph::createInstance(int n) {
     uniform_int_distribution<int> demRange(1,3);
 
     // Possíveis demandas dos vértices para cada intervalo
-    uniform_int_distribution<int> demand1(1,9), demand2(5,15), demand3(10,20);
+    // uniform_int_distribution<int> demand1(1,9), demand2(5,15), demand3(10,20);
 
     this->numberVertices = n;
     this->totalExpectedDemand = 0;
@@ -47,8 +47,15 @@ void Graph::createInstance(int n) {
         if (i > 0) {
 
             // Gerar probabilidade de presença e demanda dos clientes
+            if (i > this->numberVertices - 1 - numRandomClients) {
+              if (numRandomClients == 1)
+                newVertex.probOfPresence = 0.5;
+              else
+                newVertex.probOfPresence = presence(generator);
+            }
+            else
+              newVertex.probOfPresence = 1.0;
 
-            newVertex.probOfPresence = presence(generator);
             range = demRange(generator);
 
             switch(range) {
@@ -58,12 +65,12 @@ void Graph::createInstance(int n) {
 
                     for (int j = 1; j < 21; j++) {
 
-                        if (j < 10) {
-                            newVertex.probDemand[j] = 1.0/9.0;
-                        } else {
-                            newVertex.probDemand[j] = 0;
+                        if (j == 5) {
+                          newVertex.probDemand[j] = 1;
                         }
-
+                        else {
+                          newVertex.probDemand[j] = 0;
+                        }
                         this->expectedDemand[i] += newVertex.probDemand[j]*j;
 
                     }
@@ -75,12 +82,12 @@ void Graph::createInstance(int n) {
 
                     for (int j = 1; j < 21; j++) {
 
-                        if (j >= 5 && j <= 15) {
-                            newVertex.probDemand[j] = 1.0/11.0;
-                        } else {
-                            newVertex.probDemand[j] = 0;
+                        if (j == 10) {
+                          newVertex.probDemand[j] = 1;
                         }
-
+                        else {
+                          newVertex.probDemand[j] = 0;
+                        }
                         this->expectedDemand[i] += newVertex.probDemand[j]*j;
 
                     }
@@ -92,12 +99,12 @@ void Graph::createInstance(int n) {
 
                     for (int j = 1; j < 21; j++) {
 
-                        if (j > 9) {
-                            newVertex.probDemand[j] = 1.0/11.0;
-                        } else {
-                            newVertex.probDemand[j] = 0;
+                        if (j == 15) {
+                          newVertex.probDemand[j] = 1;
                         }
-
+                        else {
+                          newVertex.probDemand[j] = 0;
+                        }
                         this->expectedDemand[i] += newVertex.probDemand[j]*j;
 
                     }
@@ -254,6 +261,11 @@ void Graph::drawGraph(string graphName) {
     nodes.push_back(g.addNode());
     coords[nodes[i]] = Point(this->vertices[i].x, this->vertices[i].y);
 
+    // Destacar clientes incertos
+    if (this->vertices[i].probOfPresence < 1) {
+        colors[nodes[i]] = -1;
+    }
+    
   }
 
   // Destacar deposito

@@ -16,7 +16,7 @@ OBJECTS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.cpp=.o))
 
 # Flags
 LINKING_FLAGS := -O3 -std=c++11 -lemon $(LIBS)
-COMPILATION_FLAGS := -g -O3 -std=c++11 $(INCLUDES) 
+COMPILATION_FLAGS := -g -O3 -std=c++11 $(INCLUDES)
 
 ######################################################################################################################################
 # COMPILAÇÃO

@@ -1,13 +1,13 @@
-#include<lemon/math.h>
-#include<lemon/graph_to_eps.h>
-#include<lemon/list_graph.h>
-#include<iostream>
-#include<algorithm>
-#include<cmath>
-#include<vector>
-#include<random>
-#include<string>
-#include<time.h>
+#include <lemon/math.h>
+#include <lemon/graph_to_eps.h>
+#include <lemon/list_graph.h>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <vector>
+#include <random>
+#include <string>
+#include <time.h>
 
 using namespace std;
 using namespace lemon;
@@ -27,18 +27,16 @@ struct edge {
 class Graph {
 
 public:
-
     int numberVertices;
     double totalExpectedDemand;
     vector<double> expectedDemand;
     vector<vertex> vertices;
     vector<edge> edges;
-    vector<vector<double>> adjMatrix;
+    vector<vector<double> > adjMatrix;
 
-    void createInstance(int n);
+    void createInstance(int n, int numRandomClients);
     void computeDistances();
     void printInstance();
     void drawGraph(string graphName);
     vector<int> TSP();
-
 };

@@ -11,169 +11,243 @@
 
 char verbosity;
 
-int main(int argc, const char **argv) {
+int main(int argc, const char** argv)
+{
 
-  Graph graph;
-  double fillingCoeff;
-	int capacity, numberVertices, numberVehicles;
-  char saveFile, saveEps;
-  ifstream instanceFile;
-  stringstream input;
-  string line;
+    Graph graph;
+    double fillingCoeff;
+    int capacity, numberVertices, numberVehicles, numRandomClients;
+    char saveFile, saveEps;
+    ifstream instanceFile;
+    stringstream input;
+    string line;
 
-  srand(time(0));
-  
-  if(argc == 2) {
-    instanceFile.open(argv[1], std::ios::in | std::ios::binary);
+    srand(time(0));
 
-  	if (!instanceFile.is_open()) {
-    		printf("ERROR: Not possible to open instance file.\n");
-  		return 1;
-  	}
+    // Ler entrada de um arquivo
+    if (argc == 2) {
+        instanceFile.open(argv[1], std::ios::in | std::ios::binary);
 
-    getline(instanceFile, line);
-		input = stringstream(line);
-		input >> numberVertices;
-    getline(instanceFile, line);
-		input = stringstream(line);
-		input >> numberVehicles;
-    getline(instanceFile, line);
-    input = stringstream(line);
-    input >> fillingCoeff;
-    getline(instanceFile, line);
-    input = stringstream(line);
-    input >> verbosity;
-    getline(instanceFile, line);
-    input = stringstream(line);
-    input >> saveFile;
-  }
+        if (!instanceFile.is_open()) {
+            printf("ERROR: Not possible to open instance file.\n");
+            return 1;
+        }
 
-  else {
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> numberVertices;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> numRandomClients;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> numberVehicles;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> fillingCoeff;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> verbosity;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> saveFile;
+        getline(instanceFile, line);
+        input = stringstream(line);
+        input >> saveEps;
+    }
 
-    do {
-      cout << "Enter with number of vertices including depot (>1): ";
-      cin >> numberVertices;
-    } while(numberVertices <= 1);
+    // Ler entrada do stdin
+    else {
 
-    do{
-      cout << "Enter with number of vehicles (>=1 and less then number of vertices): ";
-      cin >> numberVehicles;
-    } while(numberVehicles < 1 || numberVehicles > numberVertices-1);
+        do {
+            cout << "Enter with number of vertices including depot (>1): ";
+            cin >> numberVertices;
+        } while (numberVertices <= 1);
 
-    do {
-      cout << "Enter with filling coefficient in interval (0,1]: ";
-      cin >> fillingCoeff;
-    } while(fillingCoeff <= 0 || fillingCoeff > 1);
+        do {
+            cout << "Enter with number of clients whose presence is uncertain [0,n-1]: ";
+            cin >> numRandomClients;
+        } while (numRandomClients >= numberVertices);
 
-    do {
-      cout << "Visualize all problem information in stdio? (y/n): ";
-      cin >> verbosity;
-    } while(verbosity != 'y' && verbosity != 'n');
+        do {
+            cout << "Enter with number of vehicles (>=1 and less then number of vertices): ";
+            cin >> numberVehicles;
+        } while (numberVehicles < 1 || numberVehicles > numberVertices - 1);
 
-    do {
-      cout << "Save best solution in txt file? (y/n): ";
-      cin >> saveFile;
-    } while(saveFile != 'y' && saveFile != 'n');
+        do {
+            cout << "Enter with filling coefficient in interval (0,1]: ";
+            cin >> fillingCoeff;
+        } while (fillingCoeff <= 0 || fillingCoeff > 1);
 
-    do {
-      cout << "Visualize best solution in eps file? (y/n): ";
-      cin >> saveEps;
-    } while(saveEps != 'y' && saveEps != 'n');
+        do {
+            cout << "Visualize all problem information in stdio? (y/n): ";
+            cin >> verbosity;
+        } while (verbosity != 'y' && verbosity != 'n');
 
-  }
+        do {
+            cout << "Save best solution in txt file? (y/n): ";
+            cin >> saveFile;
+        } while (saveFile != 'y' && saveFile != 'n');
 
-	/* Capacidade regulada de acordo com os dados do problema */
-	capacity = max(int(10*(numberVertices-1)/(2*numberVehicles*fillingCoeff)),20);
+        do {
+            cout << "Visualize best solution in eps file? (y/n): ";
+            cin >> saveEps;
+        } while (saveEps != 'y' && saveEps != 'n');
+    }
 
-	if(verbosity == 'y')
-    cout << "Capacity of each vehicle: " << capacity << endl;
+    // Capacidade regulada de acordo com os dados do problema
+    capacity = max(int(10 * (numberVertices - 1) / (2 * numberVehicles * fillingCoeff)), 20);
 
-	/* Criar um grafo completo respeitando a desigualdade triangular */
-  graph.createInstance(numberVertices);
+    if (verbosity == 'y')
+        cout << "Capacity of each vehicle: " << capacity << endl;
 
-  if(verbosity == 'y')
-  	graph.printInstance();
+    // Criar um grafo completo respeitando a desigualdade triangular
+    graph.createInstance(numberVertices, numRandomClients);
 
-	// TabuSearchSVRP ts;
+    if (verbosity == 'y')
+        graph.printInstance();
 
-  clock_t begin = clock();
+    // Executar L-Shaped
+    clock_t begin = clock();
+    vector<vector<int> > bestSol = solveSVRP(graph, numberVehicles, capacity, 0);
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double time = 0, cost = 0;
 
-	// svrpSol bestSol = ts.run(graph, numberVehicles, capacity);
-  solveSVRP(graph, numberVehicles, capacity, 0);
+    // Executar busca tabu
+    TabuSearchSVRP ts;
+    begin = clock();
+    svrpSol bestTabuSol = ts.run(graph, numberVehicles, capacity);
+    end = clock();
+    cost += bestTabuSol.expectedCost;
+    time += double(end - begin) / CLOCKS_PER_SEC;
 
-  clock_t end = clock();
+    string nameTabuOutputFile = "output/";
+    nameTabuOutputFile += "bestTabuSolN" + to_string(numberVertices)
+        + "M" + to_string(numberVehicles)
+        + "f" + to_string(fillingCoeff).substr(0, 4);
 
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    string nameBestOutputFile = "output/";
+    nameBestOutputFile += "bestSolN" + to_string(numberVertices)
+        + "M" + to_string(numberVehicles)
+        + "f" + to_string(fillingCoeff).substr(0, 4);
 
-  string nameOutputFile = "output/";
-  nameOutputFile += "BestSolN" + to_string(numberVertices)
-                  + "M" + to_string(numberVehicles)
-                  + "f" + to_string(fillingCoeff).substr(0,4);
+    // Salvar output em um arquivo
+    if (saveFile == 'y') {
 
-  // if (saveFile == 'y') {
+        string txtNameOutputFile = nameTabuOutputFile + ".txt";
+        ofstream outputFile;
+        outputFile.open(txtNameOutputFile, std::ios::app);
 
-  //   string txtNameOutputFile = nameOutputFile + ".txt";
+        if (outputFile.is_open()) {
 
-  //   ofstream outputFile;
+            if (bestTabuSol.routes.size() == 0)
+                outputFile << "Nenhuma solucao viavel encontrada" << endl;
 
-  //   outputFile.open(txtNameOutputFile, std::ios::app);
+            else {
 
-  //   if (outputFile.is_open())  {
+                for (int i = 0; i < bestTabuSol.routes.size(); i++) {
+                    outputFile << "Rota " << i << ": ";
+                    for (int j = 0; j < bestTabuSol.routes[i].size(); j++) {
+                        outputFile << bestTabuSol.routes[i][j] << " ";
+                    }
+                    outputFile << endl;
+                }
+            }
 
-  //     if(bestSol.routes.size() == 0)
-  //         outputFile << "Nenhuma solucao viavel encontrada" <<  endl;
+            outputFile << "Custo total: " << bestTabuSol.expectedCost << endl;
+            outputFile << "Tempo de processamento: " << elapsed_secs << endl
+                       << endl;
+            outputFile.close();
+        }
 
-  //     else {
+        else
+            cout << "Unable to open file";
 
-  //       for(int i = 0; i < bestSol.routes.size(); i++) {
-  //     		outputFile << "Rota " << i << ": ";
-  //     		for(int j = 0; j < bestSol.routes[i].size(); j++) {
-  //     			outputFile << bestSol.routes[i][j] << " ";
-  //     		}
-  //     		outputFile << endl;
-  //     	}
-  //     }
+        txtNameOutputFile = nameBestOutputFile + ".txt";
+        outputFile;
+        outputFile.open(txtNameOutputFile, std::ios::app);
 
-  //     outputFile << "Custo total: " << bestSol.expectedCost << endl;
-  //     outputFile << "Tempo de processamento: " << elapsed_secs << endl << endl;
+        if (outputFile.is_open()) {
 
-  //     outputFile.close();
+            if (bestSol.size() == 0)
+                outputFile << "Nenhuma solucao viavel encontrada" << endl;
 
-  //   }
+            else {
+                for (int i = 0; i < bestSol.size(); i++) {
+                    outputFile << "Rota " << i << ": ";
+                    for (int j = 0; j < bestSol[i].size(); j++) {
+                        outputFile << bestSol[i][j] << " ";
+                    }
+                    outputFile << endl;
+                }
+            }
 
-  //   else cout << "Unable to open file";
-  // }
+            outputFile << "Custo total: " << Bertsimas2ndStage::totalExpectedLength(graph, capacity, bestSol) << endl;
+            outputFile << "Tempo de processamento: " << elapsed_secs << endl
+                       << endl;
+            outputFile.close();
+        }
 
-  // else {
+        else
+            cout << "Unable to open file";
+    }
 
-  //   if (bestSol.routes.size() == 0)
-  //       cout << "Nenhuma solucao viavel encontrada" <<  endl;
+    // Imprimir solução no stdout
+    else {
 
-  //   else {
-  //     for(int i = 0; i < bestSol.routes.size(); i++) {
-  //       cout << "Rota " << i << ": ";
-  //       for(int j = 0; j < bestSol.routes[i].size(); j++) {
-  //         cout << bestSol.routes[i][j] << " ";
-  //       }
-  //       cout << endl;
-  //     }
+        if (bestTabuSol.routes.size() == 0)
+            cout << "Nenhuma solucao viavel encontrada" << endl;
 
-  //   }
+        else {
+            for (int i = 0; i < bestTabuSol.routes.size(); i++) {
+                cout << "Rota " << i << ": ";
+                for (int j = 0; j < bestTabuSol.routes[i].size(); j++) {
+                    cout << bestTabuSol.routes[i][j] << " ";
+                }
+                cout << endl;
+            }
+        }
 
-  //   cout << "Custo total: " << bestSol.expectedCost << endl;
-  //   cout << "Tempo de processamento: " << elapsed_secs << endl << endl;
+        cout << "Custo total tabu: " << cost << endl;
+        cout << "Tempo de processamento: " << time << endl
+             << endl;
 
-  // }
+        if (bestSol.size() == 0)
+            cout << "Nenhuma solucao viavel encontrada" << endl;
 
-  // if (saveEps == 'y') {
+        else {
+            for (int i = 0; i < bestSol.size(); i++) {
+                cout << "Rota " << i << ": ";
+                for (int j = 0; j < bestSol[i].size(); j++) {
+                    cout << bestSol[i][j] << " ";
+                }
+                cout << endl;
+            }
+        }
 
-  //   nameOutputFile += ".eps";
+        cout << "Custo total: " << Bertsimas2ndStage::totalExpectedLength(graph, capacity, bestSol) << endl;
+        cout << "Tempo de processamento: " << elapsed_secs << endl
+             << endl;
+    }
 
-  //   if(bestSol.routes.size() != 0)
-  //     drawRoutes(graph, bestSol, nameOutputFile);
+    // Salvar imagem EPS com as rotas planejadas
+    if (saveEps == 'y') {
 
-  // }
+        nameTabuOutputFile += ".eps";
+        nameBestOutputFile += ".eps";
 
-  return 0;
+        if (bestTabuSol.routes.size() != 0)
+            drawRoutes(graph, bestTabuSol.routes, nameTabuOutputFile);
 
+        if (bestSol.size() != 0)
+            drawRoutes(graph, bestSol, nameBestOutputFile);
+    }
+
+    for (int i = 0; i < numberVertices; i++) {
+        cout << graph.vertices[i].probOfPresence << " ";
+    }
+    cout << endl;
+
+    return 0;
 }

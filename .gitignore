@@ -1,5 +1,6 @@
 .vscode
 bin
 build
+input
 output
 *.lp

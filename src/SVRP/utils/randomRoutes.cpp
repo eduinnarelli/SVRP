@@ -8,7 +8,8 @@ Saída:
 routes: vetor de rotas, cada uma um vetor de inteiros indicando a ordem em que
 os vértices devem ser percorridos.
 */
-vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
+vector<vector<int> > randomRoutes(int numberVertices, int numberVehicles)
+{
 
     vector<int> costumers;
 
@@ -16,24 +17,24 @@ vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
         costumers.push_back(i);
 
     srand(time(0));
-    random_shuffle(costumers.begin(), costumers.end(), [](int i){ return rand()%i; });
+    random_shuffle(costumers.begin(), costumers.end(), [](int i) { return rand() % i; });
 
-    vector<vector<int>> routes(numberVehicles);
+    vector<vector<int> > routes(numberVehicles);
     int routeSize = numberVertices / numberVehicles;
 
     cout << endl;
 
     for (int r = 0; r < numberVehicles; r++) {
 
-        auto start_it = next(costumers.begin(), r*routeSize);
-        auto end_it = next(costumers.begin(), r*routeSize + routeSize);
+        auto start_it = next(costumers.begin(), r * routeSize);
+        auto end_it = next(costumers.begin(), r * routeSize + routeSize);
 
         routes[r].resize(routeSize);
 
         // Colocar o que restou na última rota
         if (r == numberVehicles - 1) {
             end_it = costumers.end();
-            routes[r].resize(costumers.size() - r*routeSize);
+            routes[r].resize(costumers.size() - r * routeSize);
         }
 
         copy(start_it, end_it, routes[r].begin());
@@ -44,11 +45,9 @@ vector<vector<int>> randomRoutes(int numberVertices, int numberVehicles) {
             cout << routes[r][i] << ' ';
 
         cout << endl;
-
     }
 
     cout << endl;
 
     return routes;
-
 }

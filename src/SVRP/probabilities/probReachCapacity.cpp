@@ -17,19 +17,20 @@ orderInRoute: ordem dos vértices na rota. orderInRoute[2] = 3o cliente da rota.
 Saída: double indicando a probabilidade da demanda até o vértice 'i' ser exatamente igual a
 capacidade máxima do veículo.
 */
-double probReachCapacity(int i, Graph g, vector<vector<double>> f, int capacity, vector<int> orderInRoute) {
+double probReachCapacity(int i, Graph g, vector<vector<double> > f, int capacity, vector<int> orderInRoute)
+{
 
-	double probReachCap = 0;
-	int vtx = orderInRoute[i];
+    double probReachCap = 0;
+    int vtx = orderInRoute[i];
 
-	// Para todos os possíveis números de falhas "q"
-	for (int q = 1; q <= floor((i + 1) * 20 / capacity); q++) {
+    // Para todos os possíveis números de falhas "q"
+    for (int q = 1; q <= floor((i + 1) * 20 / capacity); q++) {
 
-		// Para todas as possíveis "k" capacidades residuais no vértice anterior a "i"
-		for (int k = 1; k <= 20; k++) {
-			probReachCap += g.vertices[vtx].probOfPresence * g.vertices[vtx].probDemand[k] * f[i][q * capacity - k];
-		}
-	}
+        // Para todas as possíveis "k" capacidades residuais no vértice anterior a "i"
+        for (int k = 1; k <= 20; k++) {
+            probReachCap += g.vertices[vtx].probOfPresence * g.vertices[vtx].probDemand[k] * f[i][q * capacity - k];
+        }
+    }
 
-	return probReachCap;
+    return probReachCap;
 }

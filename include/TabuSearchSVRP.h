@@ -76,15 +76,15 @@ struct routeMove {
     double approxCost;
     bool valid;
 
-    bool operator==(const routeMove& other) const {
+    bool operator==(const routeMove& other) const
+    {
         return this->client == other.client
-                && this->clientRoute == other.clientRoute;
+            && this->clientRoute == other.clientRoute;
     }
-
 };
 
 struct svrpSol {
-    vector<vector<int>> routes;
+    vector<vector<int> > routes;
     double expectedCost;
 };
 
@@ -98,16 +98,14 @@ class TabuSearchSVRP {
     routeMove moveDone;
     vector<int> routeOfClient;
     vector<double> relativeDemand;
-    vector<vector<int>> closestNeighbours;
+    vector<vector<int> > closestNeighbours;
     vector<routeMove> tabuMoves;
     svrpSol sol, bestFeasibleSol;
 
 public:
-
     svrpSol run(Graph inst, int numVehicles, int capacity);
 
 private:
-
     // Etapas
     void initialize(Graph inst, int numVehicles, int capacity);
     void neighbourhoodSearch();
@@ -115,10 +113,9 @@ private:
     void intensification();
 
     // Funções
-    double penalizedExpectedLength(vector<vector<int>> sol);
+    double penalizedExpectedLength(vector<vector<int> > sol);
     double removalCost(int r, int client);
     double maxRemovalCost(int r);
     double approxInsertImpact(int a, int b, int c);
     double approxMoveCost(routeMove m);
-
 };

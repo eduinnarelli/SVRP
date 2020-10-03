@@ -1,93 +1,94 @@
 #include "SVRP.h"
 
 /* Etapa 1: construir solução e estruturas iniciais */
-void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity) {
+void TabuSearchSVRP::initialize(Graph inst, int numVehicles, int capacity)
+{
 
-	if(verbosity == 'y')
-		cout << endl << "INITIALIZE" << endl;
+    if (verbosity == 'y')
+        cout << endl
+             << "INITIALIZE" << endl;
 
-	this->g = inst;
-  this->numVehicles = numVehicles;
-  this->capacity = capacity;
+    this->g = inst;
+    this->numVehicles = numVehicles;
+    this->capacity = capacity;
 
-  int h = min(this->g.numberVertices - 1, 10);
+    int h = min(this->g.numberVertices - 1, 10);
 
-	this->closestNeighbours.clear();
+    this->closestNeighbours.clear();
 
-  // Computar os h vizinhos mais próximos de cada vértice
-  for (int i = 0; i < this->g.numberVertices; i++) {
+    // Computar os h vizinhos mais próximos de cada vértice
+    for (int i = 0; i < this->g.numberVertices; i++) {
 
-    vector<int> closest(this->g.numberVertices-1); // -1, pois não pegamos o depósito
-    vector<double> dist = this->g.adjMatrix[i];
+        vector<int> closest(this->g.numberVertices - 1); // -1, pois não pegamos o depósito
+        vector<double> dist = this->g.adjMatrix[i];
 
-    iota(closest.begin(), closest.end(), 1); // Com 0 pegamos o depósito
+        iota(closest.begin(), closest.end(), 1); // Com 0 pegamos o depósito
 
-    sort(closest.begin(), closest.end(), [&dist](size_t i1, size_t i2){
-        return dist[i1] < dist[i2];
-    });
+        sort(closest.begin(), closest.end(), [&dist](size_t i1, size_t i2) {
+            return dist[i1] < dist[i2];
+        });
 
-    closest.erase(closest.begin()); // Desconsideramos o vértice como seu próprio vizinho
-    closest.erase(closest.begin() + h, closest.end());
+        closest.erase(closest.begin()); // Desconsideramos o vértice como seu próprio vizinho
+        closest.erase(closest.begin() + h, closest.end());
 
-    this->closestNeighbours.push_back(closest);
+        this->closestNeighbours.push_back(closest);
+    }
 
-  }
+    this->routeOfClient.resize(this->g.numberVertices);
+    this->sol.routes.clear();
 
-  this->routeOfClient.resize(this->g.numberVertices);
-	this->sol.routes.clear();
+    // Rotas de ida e volta ao depósito
+    for (int i = 1; i < this->g.numberVertices; i++) {
 
-  // Rotas de ida e volta ao depósito
-  for (int i = 1; i < this->g.numberVertices; i++) {
+        vector<int> route(1, i);
+        this->sol.routes.push_back(route);
+        this->routeOfClient[i] = i - 1;
+    }
 
-    vector<int> route(1, i);
-    this->sol.routes.push_back(route);
-    this->routeOfClient[i] = i-1;
+    this->penalty = 1;
+    this->numRoutes = this->g.numberVertices - 1;
 
-  }
+    this->sol.expectedCost = penalizedExpectedLength(this->sol.routes);
+    this->bestPenalExpCost = this->sol.expectedCost;
 
-  this->penalty = 1;
-	this->numRoutes = this->g.numberVertices - 1;
+    if (verbosity == 'y')
+        cout << "Demandas relativas:" << endl;
 
-  this->sol.expectedCost = penalizedExpectedLength(this->sol.routes);
-	this->bestPenalExpCost = this->sol.expectedCost;
+    // Coeficiente que relaciona a demanda esperada do vértice com a total
+    for (int i = 1; i < this->g.numberVertices; i++) {
 
-	if(verbosity == 'y')
-		cout << "Demandas relativas:" << endl;
+        relativeDemand.push_back(this->g.expectedDemand[i] / this->g.totalExpectedDemand);
 
-  // Coeficiente que relaciona a demanda esperada do vértice com a total
-  for (int i = 1; i < this->g.numberVertices; i++) {
+        if (verbosity == 'y')
+            cout << relativeDemand[i - 1] << endl;
+    }
 
-    relativeDemand.push_back(this->g.expectedDemand[i] / this->g.totalExpectedDemand);
+    // Ajuste de parâmetros
+    this->numNearest = min(this->g.numberVertices - 1, 5);
+    this->numSelected = min(this->g.numberVertices - 1, 5 * this->numVehicles);
 
-		if(verbosity == 'y')
-			cout << relativeDemand[i-1] << endl;
+    this->itCount = 0;
+    this->currNoImprovement = 0;
 
-  }
+    if (numVehicles < this->g.numberVertices - 1) {
+        this->numInfeasibleNearby = 1;
+        this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
+    }
+    else {
+        this->numInfeasibleNearby = 0;
+        if (numVehicles == this->g.numberVertices - 1) {
+            this->bestFeasibleSol.expectedCost = this->sol.expectedCost;
+            this->bestFeasibleSol.routes = this->sol.routes;
+        }
+        else {
+            this->bestFeasibleSol.routes.clear();
+            this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
+        }
+    }
 
-  // Ajuste de parâmetros
-  this->numNearest = min(this->g.numberVertices - 1, 5);
-  this->numSelected = min(this->g.numberVertices - 1, 5*this->numVehicles);
+    this->maxNoImprovement = 50 * this->g.numberVertices;
 
-  this->itCount = 0;
-  this->currNoImprovement = 0;
-
-  if (numVehicles < this->g.numberVertices - 1) {
-      this->numInfeasibleNearby = 1;
-      this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
-  } else {
-      this->numInfeasibleNearby = 0;
-			if(numVehicles == this->g.numberVertices - 1) {
-      	this->bestFeasibleSol.expectedCost = this->sol.expectedCost;
-      	this->bestFeasibleSol.routes = this->sol.routes;
-			}
-			else {
-				this->bestFeasibleSol.routes.clear();
-				this->bestFeasibleSol.expectedCost = numeric_limits<double>::max();
-			}
-  }
-
-  this->maxNoImprovement = 50*this->g.numberVertices;
-
-	if(verbosity == 'y')
-		cout << "END_INITIALIZE" << endl << endl;
+    if (verbosity == 'y')
+        cout << "END_INITIALIZE" << endl
+             << endl;
 }
