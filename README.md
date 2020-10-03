@@ -8,8 +8,8 @@ O objetivo no primeiro estágio é projetar m rotas (uma para cada veículo) de 
 ### L-Shaped
 
 Códigos:
- - [Implementação no Gurobi](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/l-shaped/solve.cpp)
- - [Funções para encontrar componentes conexas em soluções inteiras](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/l-shaped/utils/connectedComponents.cpp)
+ - [Implementação no Gurobi](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/l-shaped/solve.cpp)
+ - [Funções para encontrar componentes conexas em soluções inteiras](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/l-shaped/utils/connectedComponents.cpp)
 
 Referência:
 
@@ -19,11 +19,11 @@ Referência:
 
 Códigos:
 
- - [Fluxo de execução](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/tabu-search/run.cpp)
- - [Construção de solução e estruturas iniciais](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/tabu-search/steps/initialize.cpp)
- - [Avaliação de soluções a partir de movimentos entre vizinhos](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/tabu-search/steps/neighbourhood-search.cpp)
- - [Atualização de estruturas, parâmetros e melhor solução conforme a viabilidade da solução corrente](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/first-stage/tabu-search/steps/neighbourhood-search.cpp)
- - [Custos aproximados](https://github.com/eduinnarelli/SVRP/tree/L-shaped/src/SVRP/first-stage/tabu-search/utils)
+ - [Fluxo de execução](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/tabu-search/run.cpp)
+ - [Construção de solução e estruturas iniciais](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/tabu-search/steps/initialize.cpp)
+ - [Avaliação de soluções a partir de movimentos entre vizinhos](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/tabu-search/steps/neighbourhood-search.cpp)
+ - [Atualização de estruturas, parâmetros e melhor solução conforme a viabilidade da solução corrente](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/first-stage/tabu-search/steps/neighbourhood-search.cpp)
+ - [Custos aproximados](https://github.com/eduinnarelli/SVRP/tree/master/src/SVRP/first-stage/tabu-search/utils)
 
 Referência:
 
@@ -35,9 +35,9 @@ No segundo estágio, após serem realizados os eventos aleatórios, são aplicad
 ### Cálculo do Custo Esperado
 
 Códigos:
- - [Custo esperado total (todas as rotas)](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/second-stage/bertsimas-formula/totalExpectedLength.cpp)
- - [Custo esperado de uma rota](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/SVRP/second-stage/bertsimas-formula/routeExpectedLength.cpp) 
- - [Probabilidades usadas](https://github.com/eduinnarelli/SVRP/tree/L-shaped/src/SVRP/probabilities)
+ - [Custo esperado total (todas as rotas)](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/second-stage/bertsimas-formula/totalExpectedLength.cpp)
+ - [Custo esperado de uma rota](https://github.com/eduinnarelli/SVRP/blob/master/src/SVRP/second-stage/bertsimas-formula/routeExpectedLength.cpp) 
+ - [Probabilidades usadas](https://github.com/eduinnarelli/SVRP/tree/master/src/SVRP/probabilities)
 
 Referência:
 
@@ -45,7 +45,7 @@ Referência:
 
 ## Código Adicional
 
- - [Estrutura dos Grafos](https://github.com/eduinnarelli/SVRP/blob/L-shaped/src/graph.cpp)
+ - [Estrutura dos Grafos](https://github.com/eduinnarelli/SVRP/blob/master/src/graph.cpp)
 
 # Resultados
  - [L-Shaped e Tabu](https://docs.google.com/spreadsheets/d/142UPJiPdn5aW4Priix_-M1D8ou6k1t6roDuSH1Ff3Bo/edit?usp=sharing)
