@@ -1,8 +1,6 @@
 # SVRP - Projeto de Iniciação Científica
 
-**Alunos**:
- - Eduardo Barros Innarelli (170161)
- - Felipe Lopes de Mello (171119)
+**Alunos**: Eduardo Barros Innarelli (170161) e Felipe Lopes de Mello (171119)
 
 **Orientador**: Eduardo Candido Xavier
 
