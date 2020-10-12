@@ -1,5 +1,7 @@
 # SVRP - Projeto de Iniciação Científica
 
+[Instituto de Computação](http://ic.unicamp.br/) - [UNICAMP](http://www.unicamp.br/unicamp/) (Universidade Estadual de Campinas)
+
 **Alunos**: Eduardo Barros Innarelli (170161) e Felipe Lopes de Mello (171119)
 
 **Orientador**: Eduardo Candido Xavier
